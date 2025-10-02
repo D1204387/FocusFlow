@@ -1,32 +1,26 @@
-//
-//  FocusFlowApp.swift
-//  FocusFlow
-//
-//  Created by YiJou  on 2025/9/27.
-//
-
+    // APP/FocusFlowApp.swift
 import SwiftUI
 import SwiftData
 
 @main
 struct FocusFlowApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
+    @State private var coordinator = ModuleCoordinator()
+    
+    private let container: ModelContainer = {
+        let schema = Schema([RunningRecord.self, PomodoroRecord.self, GameRecord.self])
+        return try! ModelContainer(for: schema)
     }()
-
+    
+    init() {
+        migrateUserDefaultsIfNeeded()   // ← 加這行
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            FocusFlowRootView()
+                .environment(coordinator)
+                .modelContainer(container)
+                .preferredColorScheme(.light)
         }
-        .modelContainer(sharedModelContainer)
     }
 }

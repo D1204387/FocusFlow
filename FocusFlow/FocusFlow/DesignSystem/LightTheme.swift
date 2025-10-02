@@ -1,0 +1,45 @@
+    // DesignSystem/LightTheme.swift
+import SwiftUI
+
+enum LightTheme {
+    static let bg        = Color.white
+    static let text      = Color.black
+    static let subtext   = Color.black.opacity(0.45)
+    static let track     = Color.black.opacity(0.08)
+    
+    enum Run {
+        static let solid   = Color(hex: 0x1677FF)
+        static let gradTop = Color(hex: 0x3AA0FF)
+        static let gradBot = Color(hex: 0x79C0FF)
+    }
+    enum Focus {
+        static let solid   = Color(hex: 0x2EBB74)
+        static let gradTop = Color(hex: 0x4CD495)
+        static let gradBot = Color(hex: 0x96E7C3)
+    }
+    
+    static let pillBG     = Color.black.opacity(0.06)
+    static let cardStroke = Color.black.opacity(0.08)
+    
+    static let softShadow = ShadowStyle(color: .black.opacity(0.08), radius: 12, y: 6)
+}
+
+struct ShadowStyle { let color: Color; let radius: CGFloat; let x: CGFloat = 0; let y: CGFloat }
+
+extension View {
+    func softShadow(_ s: ShadowStyle = LightTheme.softShadow) -> some View {
+        shadow(color: s.color, radius: s.radius, x: s.x, y: s.y)
+    }
+}
+
+extension Color {
+    init(hex: UInt, alpha: Double = 1) {
+        let r = Double((hex >> 16) & 0xFF) / 255
+        let g = Double((hex >> 8) & 0xFF) / 255
+        let b = Double(hex & 0xFF) / 255
+        self = Color(red: r, green: g, blue: b, opacity: alpha)
+    }
+}
+
+    // 讓既有程式可用 Theme.*
+typealias Theme = LightTheme
