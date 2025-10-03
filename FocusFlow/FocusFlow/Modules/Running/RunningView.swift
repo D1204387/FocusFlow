@@ -8,16 +8,12 @@ struct RunningView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(ModuleCoordinator.self) private var co
     
-        // 與 SettingsView 的 key 一致
+        // 與 SettingsView 的 key 一致（統一用 FFKey）
     @AppStorage(FFKey.runTargetMinutes) private var runTargetMinutes: Int = 20
     @AppStorage(FFKey.bgmOn)            private var bgmOn: Bool = true
     @AppStorage(FFKey.metronomeOn)      private var metronomeOn: Bool = true
     @AppStorage(FFKey.metronomeBPM)     private var metronomeBPM: Int = 180
     @AppStorage(FFKey.hapticsOn)        private var hapticsOn: Bool = true
-    @AppStorage("enableMusic")     private var enableMusic: Bool = true
-    @AppStorage("enableMetronome") private var enableMetronome: Bool = true
-
-    @AppStorage("enableHaptics")   private var enableHaptics: Bool = true
     
     @State private var isRunning = false
     @State private var startAt: Date?
@@ -34,7 +30,7 @@ struct RunningView: View {
     private var targetSeconds: Int { max(1, runTargetMinutes) * 60 }
     private var progress: Double {
         guard targetSeconds > 0 else { return 0 }
-        return min(1, elapsed / Double(targetSeconds))
+        return min(1, Double(elapsed) / Double(targetSeconds))
     }
     
     var body: some View {
@@ -49,18 +45,18 @@ struct RunningView: View {
                         Spacer()
                     }
                     
-                        // 分段圓環 + 時間群
-                    SegmentedGaugeRing(
+                        // 分段進度環 + 時間群（60 刻度、12 點起點）
+                    ImprovedSegmentedGaugeRing(
                         progress: progress,
                         size: 320,
                         tickCount: 60,
-                        tickSize: .init(width: 7, height: 32),
-                        innerPadding: 20,
+                        tickSize: .init(width: 8, height: 34),
+                        innerPadding: 18,
                         active: Theme.Run.solid,
                         inactive: Color(.systemGray4)
                     ) {
                         TimeCluster(
-                            elapsed: Int(elapsed),          // ⬅️ 傳 Int（秒）
+                            elapsed: Int(elapsed),
                             targetSeconds: targetSeconds,
                             accent: Theme.Run.solid
                         )
@@ -69,10 +65,10 @@ struct RunningView: View {
                     
                         // 中段資訊列：目標時間 / 音樂 / 節拍器
                     InfoStrip(icon: "target", text: "目標 \(runTargetMinutes) 分鐘")
-                    InfoStrip(icon: enableMusic ? "pause.fill" : "play.fill",
-                              text: "背景音樂已\(enableMusic ? "開啟" : "關閉")")
+                    InfoStrip(icon: bgmOn ? "pause.fill" : "play.fill",
+                              text: "背景音樂已\(bgmOn ? "開啟" : "關閉")")
                     InfoStrip(icon: "metronome.fill",
-                              text: "BPM \(metronomeBPM)  節拍\(enableMetronome ? "開啟" : "關閉")")
+                              text: "BPM \(metronomeBPM)  節拍\(metronomeOn ? "開啟" : "關閉")")
                     
                         // 操作按鈕（主/次一致風格）
                     HStack(spacing: 12) {
@@ -90,21 +86,25 @@ struct RunningView: View {
                 .padding()
             }
             .background(Theme.bg)
-            .toolbarEnergy(title: "慢跑時光", tint: Theme.Run.solid) // ⬅️ 統一用共用 Toolbar
-            .onAppear { AudioService.shared.stopRunSession() }     // 防止一進頁就播
-            .onDisappear { AudioService.shared.stopRunSession() }  // 離頁一定關閉
+            .toolbarEnergy(title: "慢跑時光", tint: Theme.Run.solid)
+            
+                // 防止一進頁就播；離頁一定關閉
+            .onAppear { AudioService.shared.stopRunSession() }
+            .onDisappear { AudioService.shared.stopRunSession() }
+            
+                // 計時更新
             .onReceive(tick) { t in if isRunning { now = t } }
             
-                // 只有在「跑步進行中」才會套用設定變更
+                // 設定變更 → 僅在「跑步中」才作用到音訊
             .onChange(of: metronomeBPM) { _, v in
-                if isRunning, enableMetronome { AudioService.shared.setBPM(v) }
+                if isRunning, metronomeOn { AudioService.shared.setBPM(v) }
             }
-            .onChange(of: enableMetronome) { _, on in
+            .onChange(of: metronomeOn) { _, on in
                 guard isRunning else { return }
                 on ? AudioService.shared.startMetronome(bpm: metronomeBPM)
                 : AudioService.shared.stopMetronome()
             }
-            .onChange(of: enableMusic) { _, on in
+            .onChange(of: bgmOn) { _, on in
                 guard isRunning else { return }
                 on ? AudioService.shared.startBGM()
                 : AudioService.shared.stopBGM()
@@ -117,7 +117,7 @@ struct RunningView: View {
         startAt = .now
         now = .now
         isRunning = true
-
+        
         AudioService.shared.startRunSession(
             enableMusic: bgmOn,
             enableMetronome: metronomeOn,
@@ -182,3 +182,4 @@ private struct InfoStrip: View {
         .softShadow()
     }
 }
+

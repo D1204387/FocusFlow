@@ -2,28 +2,23 @@ import SwiftUI
 import Combine
 import SwiftData
 
-    /// 專注（番茄）頁：工作→短休→工作…；每 N 顆進入長休
-    /// - 右上角：⚡ 能量
-    /// - 中央：分段圓環 + 大時間 + 剩餘 + 完成%
-    /// - 顶部：今天幾顆（🍅）、當前模式與分鐘
-    /// - 底部：開始/暫停、跳過、重置
 struct FocusCycleView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(ModuleCoordinator.self) private var co
     
-        // 與 SettingsView 對齊
-    @AppStorage("focusMinutes")          private var focusMinutes: Int = 25
-    @AppStorage("shortBreakMinutes")     private var shortBreakMinutes: Int = 5
-    @AppStorage("longBreakMinutes")      private var longBreakMinutes: Int = 15
-    @AppStorage("roundsBeforeLongBreak") private var roundsBeforeLongBreak: Int = 4
-    @AppStorage("autoContinue")          private var autoContinue: Bool = true
+        // 與 SettingsView 對齊（統一用 FFKey）
+    @AppStorage(FFKey.focusMinutes)          private var focusMinutes: Int = 25
+    @AppStorage(FFKey.shortBreakMinutes)     private var shortBreakMinutes: Int = 5
+    @AppStorage(FFKey.longBreakMinutes)      private var longBreakMinutes: Int = 15
+    @AppStorage(FFKey.roundsBeforeLongBreak) private var roundsBeforeLongBreak: Int = 4
+    @AppStorage(FFKey.autoContinue)          private var autoContinue: Bool = true
     
         // 狀態
     enum Phase { case focus, shortBreak, longBreak }
     @State private var phase: Phase = .focus
     @State private var secondsLeft: Int = 25 * 60
     @State private var targetSeconds: Int = 25 * 60
-    @State private var cycleCount: Int = 0     // 今日完成顆數
+    @State private var cycleCount: Int = 0
     @State private var isRunning = false
     
         // 計時
@@ -33,21 +28,13 @@ struct FocusCycleView: View {
     private var elapsed: Int { max(0, targetSeconds - secondsLeft) }
     private var progress: Double {
         guard targetSeconds > 0 else { return 0 }
-        let p = Double(elapsed) / Double(targetSeconds)
-        return p < 0 ? 0 : (p > 1 ? 1 : p)
+        return max(0, min(1, Double(elapsed) / Double(targetSeconds)))
     }
     private var weekdayShort: String {
         let df = DateFormatter(); df.dateFormat = "E"; return df.string(from: Date())
     }
-    private var phaseTitle: String {
-        switch phase { case .focus: "專注中"; case .shortBreak: "短休中"; case .longBreak: "長休中" }
-    }
-    private var phaseIcon: String {
-        switch phase { case .focus: "timer"; case .shortBreak: "leaf"; case .longBreak: "bed.double" }
-    }
     
     var body: some View {
-            // 若上層已有 NavigationStack，改成 Group { content } 即可
         NavigationStack {
             content
                 .background(Theme.bg)
@@ -59,34 +46,42 @@ struct FocusCycleView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: 18) {
+                
                     // 頂部統計
                 HStack(spacing: 10) {
-                    pill("🍅 \(weekdayShort) 今天 \(cycleCount) 顆", sf: "record.circle", tint: Theme.Focus.solid)
-                    pill("\(phaseTitle.replacingOccurrences(of: "中", with: "")) \(targetSeconds/60) 分鐘",
-                         sf: phaseIcon, tint: Theme.Focus.solid)
+                    pill("🍅 \(weekdayShort) 今天 \(cycleCount) 顆",
+                         sf: "record.circle",
+                         tint: Theme.Focus.solid)
+                    pill("\(titleForPhase(phase).replacingOccurrences(of: "中", with: "")) \(targetSeconds/60) 分鐘",
+                         sf: iconForPhase(phase),
+                         tint: Theme.Focus.solid)
                     Spacer()
                 }
                 
-                    // 分段圓環 + 時間群
-                SegmentedGaugeRing(
+                    // 分段進度環 + 時間群（60 刻度、12 點起點）
+                ImprovedSegmentedGaugeRing(
                     progress: progress,
                     size: 320,
                     tickCount: 60,
-                    tickSize: .init(width: 7, height: 32),
-                    innerPadding: 20,
-                    active: Theme.Focus.solid,
+                    tickSize: .init(width: 8, height: 34),
+                    innerPadding: 18,
+                    active: colorForPhase(phase),
                     inactive: Color(.systemGray4)
                 ) {
-                    TimeCluster(
-                        elapsed: Int(elapsed),
-                        targetSeconds: targetSeconds,
-                        title: titleForPhase(phase),   // e.g. 「專注中 / 短休中 / 長休中」
-                        accent: colorForPhase(phase)
-                    )
+                    VStack(spacing: 6) {
+                        Text(titleForPhase(phase))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        TimeCluster(
+                            elapsed: elapsed,
+                            targetSeconds: targetSeconds,
+                            accent: colorForPhase(phase)
+                        )
+                    }
                 }
                 .padding(.top, 6)
                 
-                    // 當前這顆的設定摘要（你說「下方要顯示這次的設定內容」）
+                    // 當前這顆的設定摘要
                 settingsSummary
                     .padding(.top, 4)
                 
@@ -102,14 +97,13 @@ struct FocusCycleView: View {
             }
             .padding()
         }
-        .background(Theme.bg)
         .onAppear { loadPhase(.focus) }
         .onReceive(tick) { _ in countdownIfNeeded() }
     }
     
     private var settingsSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("現在：\(phaseTitle)", systemImage: phaseIcon)
+            Label("現在：\(titleForPhase(phase))", systemImage: iconForPhase(phase))
                 .foregroundStyle(Theme.text)
             Label("本次設定：專注 \(focusMinutes) 分 • 短休 \(shortBreakMinutes) 分 • 長休 \(longBreakMinutes) 分",
                   systemImage: "gearshape")
@@ -213,7 +207,6 @@ struct FocusCycleView: View {
     }
     
     private func colorForPhase(_ p: Phase) -> Color {
-            // 同一色系做輕微明度變化：專注最飽和、短休次之、長休最淡
         switch p {
         case .focus:      return Theme.Focus.solid
         case .shortBreak: return Theme.Focus.solid.opacity(0.90)
@@ -222,13 +215,11 @@ struct FocusCycleView: View {
     }
     
     private func iconForPhase(_ p: Phase) -> String {
-            // 若你在頂部 pill 仍有用到圖示，保留這個
         switch p {
         case .focus:      return "timer"
         case .shortBreak: return "leaf"
         case .longBreak:  return "bed.double"
         }
     }
-
 }
 
