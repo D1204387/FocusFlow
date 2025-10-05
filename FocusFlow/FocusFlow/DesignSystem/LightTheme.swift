@@ -18,6 +18,7 @@ enum LightTheme {
         static let gradBot = Color(hex: 0x96E7C3)
     }
     
+    
     static let pillBG     = Color.black.opacity(0.06)
     static let cardStroke = Color.black.opacity(0.08)
     
