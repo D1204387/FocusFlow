@@ -59,7 +59,7 @@ struct FocusCycleView: View {
                 }
                 
                     // 分段進度環 + 時間群（60 刻度、12 點起點）
-                ImprovedSegmentedGaugeRing(
+                SegmentedGaugeRing(
                     progress: progress,
                     size: 320,
                     tickCount: 60,

@@ -4,7 +4,7 @@ struct FocusModulePlaceholder: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                ImprovedSegmentedGaugeRing(
+                SegmentedGaugeRing(
                     progress: 0.35,
                     size: 220,
                     tickCount: 60,
