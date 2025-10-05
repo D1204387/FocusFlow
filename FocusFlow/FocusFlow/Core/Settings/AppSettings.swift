@@ -5,6 +5,7 @@
 import Foundation
 import Observation
 
+@MainActor
 @Observable
 final class AppSettings {
     static let shared = AppSettings()
@@ -66,8 +67,6 @@ final class AppSettings {
         didSet { d.set(keepScreenOn, forKey: Key.keepScreenOn) }
     }
     
-    
-    
     private init() {
             // default values
         runTargetMinutes   = d
@@ -77,7 +76,7 @@ final class AppSettings {
         metronomeOn       = d.object(
             forKey: Key.metronomeOn) as? Bool ?? false
         metronomeBPM      = d.object(
-            forKey: Key.metronomeBPM) as? Int ?? 60
+            forKey: Key.metronomeBPM) as? Int ?? 180
         hapticsOn         = d.object(
             forKey: Key.hapticsOn) as? Bool ?? true
         focusMinutes      = d.object(
@@ -89,9 +88,25 @@ final class AppSettings {
         roundsBeforeLongBreak = d.object(
             forKey: Key.roundsBeforeLongBreak) as? Int ?? 4
         autoContinue    = d.object(
-            forKey: Key.autoContinue) as? Bool ?? false
+            forKey: Key.autoContinue) as? Bool ?? true
         keepScreenOn      = d.object(
             forKey: Key.keepScreenOn) as? Bool ?? true
+    }
+        // MARK: - Utilities
+    func reset() {
+        runTargetMinutes = 20
+        bgmOn = true
+        metronomeOn = true
+        metronomeBPM = 180
+        hapticsOn = true
+        
+        focusMinutes = 25
+        shortBreakMinutes = 5
+        longBreakMinutes = 15
+        roundsBeforeLongBreak = 4
+        autoContinue = true
+        
+        keepScreenOn = true
     }
 }
 

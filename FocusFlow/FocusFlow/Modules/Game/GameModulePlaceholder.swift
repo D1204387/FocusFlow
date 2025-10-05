@@ -14,24 +14,29 @@ struct GameModulePlaceholder: View {
     @State private var canStart = true
     
     var body: some View {
-        VStack(spacing: 16) {
-            Text("2048 獎勵").font(.title.bold())
-            Text("開始一局需消耗 1 點能量。").foregroundStyle(.secondary)
-            
-            Button("開始遊戲（示範）") {
-                if co.spendEnergy(1) {
-                        // 這裡嵌入同學 C 的 2048 View
-                        // 遊戲結束後記錄：
-                    ctx.insert(GameRecord(score: 512, seconds: 120))
-                    co.apply(.gameFinished(score: 512, seconds: 120), modelContext: ctx)
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("2048 獎勵").font(.title.bold())
+                Text("開始一局需消耗 1 點能量。").foregroundStyle(.secondary)
+                
+                Button("開始遊戲（示範）") {
+                    if co.spendEnergy(1) {
+                            // 這裡嵌入同學 C 的 2048 View
+                            // 遊戲結束後記錄：
+                        ctx.insert(GameRecord(score: 512, seconds: 120))
+                        co.apply(.gameFinished(score: 512, seconds: 120), modelContext: ctx)
+                    }
                 }
+                .buttonStyle(.borderedProminent)
+                
+                Spacer()
             }
-            .buttonStyle(.borderedProminent)
-            
-            Spacer()
+            .padding()
+            .navigationTitle("遊戲模組")
+            .background(Theme.bg)
+            .toolbarEnergy(title: "遊戲", tint: .orange)
         }
-        .padding()
-        .background(Color.white)
+
     }
 }
 
