@@ -7,7 +7,7 @@
 import SwiftUI
 import UIKit 
 
-    // MARK: - 改進版分段式進度環
+    // MARK: - 分段式進度環
 public struct SegmentedGaugeRing<Center: View>: View {
         // MARK: - Properties
     private let progress: Double

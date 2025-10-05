@@ -7,14 +7,8 @@ import Combine
 struct RunningView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(ModuleCoordinator.self) private var co
-    
-        // 與 SettingsView 的 key 一致（統一用 FFKey）
-    @AppStorage(FFKey.runTargetMinutes) private var runTargetMinutes: Int = 20
-    @AppStorage(FFKey.bgmOn)            private var bgmOn: Bool = true
-    @AppStorage(FFKey.metronomeOn)      private var metronomeOn: Bool = true
-    @AppStorage(FFKey.metronomeBPM)     private var metronomeBPM: Int = 180
-    @AppStorage(FFKey.hapticsOn)        private var hapticsOn: Bool = true
-    
+    @Environment(AppSettings.self) private var settings
+
     @State private var isRunning = false
     @State private var startAt: Date?
     @State private var now = Date()
@@ -27,7 +21,7 @@ struct RunningView: View {
         guard let s = startAt else { return 0 }
         return max(0, now.timeIntervalSince(s))
     }
-    private var targetSeconds: Int { max(1, runTargetMinutes) * 60 }
+    private var targetSeconds: Int { max(1, settings.runTargetMinutes) * 60 }
     private var progress: Double {
         guard targetSeconds > 0 else { return 0 }
         return min(1, Double(elapsed) / Double(targetSeconds))
@@ -62,14 +56,7 @@ struct RunningView: View {
                         )
                     }
                     .padding(.top, 6)
-                    
-                        // 中段資訊列：目標時間 / 音樂 / 節拍器
-                    InfoStrip(icon: "target", text: "目標 \(runTargetMinutes) 分鐘")
-                    InfoStrip(icon: bgmOn ? "pause.fill" : "play.fill",
-                              text: "背景音樂已\(bgmOn ? "開啟" : "關閉")")
-                    InfoStrip(icon: "metronome.fill",
-                              text: "BPM \(metronomeBPM)  節拍\(metronomeOn ? "開啟" : "關閉")")
-                    
+                    settingsSummary
                         // 操作按鈕（主/次一致風格）
                     HStack(spacing: 12) {
                         Button(isRunning ? "結束" : "開始") { isRunning ? finish() : start() }
@@ -88,7 +75,6 @@ struct RunningView: View {
             .background(Theme.bg)
             .toolbarEnergy(title: "慢跑時光", tint: Theme.Run.solid)
             
-                // 防止一進頁就播；離頁一定關閉
             .onAppear { AudioService.shared.stopRunSession() }
             .onDisappear { AudioService.shared.stopRunSession() }
             
@@ -96,20 +82,40 @@ struct RunningView: View {
             .onReceive(tick) { t in if isRunning { now = t } }
             
                 // 設定變更 → 僅在「跑步中」才作用到音訊
-            .onChange(of: metronomeBPM) { _, v in
-                if isRunning, metronomeOn { AudioService.shared.setBPM(v) }
+            .onChange(of: settings.metronomeBPM) { _, v in
+                if isRunning, settings.metronomeOn { AudioService.shared.setBPM(v) }
             }
-            .onChange(of: metronomeOn) { _, on in
+            .onChange(of: settings.metronomeOn) { _, on in
                 guard isRunning else { return }
-                on ? AudioService.shared.startMetronome(bpm: metronomeBPM)
+                on ? AudioService.shared.startMetronome(bpm: settings.metronomeBPM)
                 : AudioService.shared.stopMetronome()
             }
-            .onChange(of: bgmOn) { _, on in
+            .onChange(of: settings.bgmOn) { _, on in
                 guard isRunning else { return }
                 on ? AudioService.shared.startBGM()
                 : AudioService.shared.stopBGM()
             }
         }
+        
+    }
+    
+    private var settingsSummary: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("目標 \(settings.runTargetMinutes) 分鐘", systemImage: "target")
+                .foregroundStyle(Theme.text)
+            Label(            "背景音樂已\(settings.bgmOn ? "開啟" : "關閉")",
+                              systemImage:  settings.bgmOn ? "pause.fill" : "play.fill")
+            .foregroundStyle(Theme.text)
+            Label("BPM \(settings.metronomeBPM)  節拍\(settings.metronomeOn ? "開啟" : "關閉")", systemImage: "metronome.fill")
+                .foregroundStyle(Theme.text)
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .softShadow()
     }
     
         // MARK: - Actions
@@ -119,10 +125,10 @@ struct RunningView: View {
         isRunning = true
         
         AudioService.shared.startRunSession(
-            enableMusic: bgmOn,
-            enableMetronome: metronomeOn,
-            bpm: metronomeBPM,
-            haptics: hapticsOn
+            enableMusic: settings.bgmOn,
+            enableMetronome: settings.metronomeOn,
+            bpm: settings.metronomeBPM,
+            haptics: settings.hapticsOn
         )
     }
     

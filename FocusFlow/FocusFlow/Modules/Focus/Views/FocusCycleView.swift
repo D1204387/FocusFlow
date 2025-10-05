@@ -5,14 +5,9 @@ import SwiftData
 struct FocusCycleView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(ModuleCoordinator.self) private var co
+    @Environment(AppSettings.self) private var settings
     
-        // 與 SettingsView 對齊（統一用 FFKey）
-    @AppStorage(FFKey.focusMinutes)          private var focusMinutes: Int = 25
-    @AppStorage(FFKey.shortBreakMinutes)     private var shortBreakMinutes: Int = 5
-    @AppStorage(FFKey.longBreakMinutes)      private var longBreakMinutes: Int = 15
-    @AppStorage(FFKey.roundsBeforeLongBreak) private var roundsBeforeLongBreak: Int = 4
-    @AppStorage(FFKey.autoContinue)          private var autoContinue: Bool = true
-    
+
         // 狀態
     enum Phase { case focus, shortBreak, longBreak }
     @State private var phase: Phase = .focus
@@ -52,7 +47,7 @@ struct FocusCycleView: View {
                     pill("🍅 \(weekdayShort) 今天 \(cycleCount) 顆",
                          sf: "record.circle",
                          tint: Theme.Focus.solid)
-                    pill("\(titleForPhase(phase).replacingOccurrences(of: "中", with: "")) \(targetSeconds/60) 分鐘",
+                    pill("\(phaseLabel(phase)) 剩餘 \(max(0, secondsLeft / 60)) 分",
                          sf: iconForPhase(phase),
                          tint: Theme.Focus.solid)
                     Spacer()
@@ -99,16 +94,29 @@ struct FocusCycleView: View {
         }
         .onAppear { loadPhase(.focus) }
         .onReceive(tick) { _ in countdownIfNeeded() }
+        .onChange(of: settings.focusMinutes) { _, _ in
+            guard !isRunning, phase == .focus else { return }
+            loadPhase(.focus)
+        }
+        .onChange(of: settings.shortBreakMinutes) { _, _ in
+            guard !isRunning, phase == .shortBreak else { return }
+            loadPhase(.shortBreak)
+        }
+        .onChange(of: settings.longBreakMinutes) { _, _ in
+            guard !isRunning, phase == .longBreak else { return }
+            loadPhase(.longBreak)
+        }
+
     }
     
     private var settingsSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("現在：\(titleForPhase(phase))", systemImage: iconForPhase(phase))
                 .foregroundStyle(Theme.text)
-            Label("本次設定：專注 \(focusMinutes) 分 • 短休 \(shortBreakMinutes) 分 • 長休 \(longBreakMinutes) 分",
+            Label("本次設定：專注 \(settings.focusMinutes) 分 • 短休 \(settings.shortBreakMinutes) 分 • 長休 \(settings.longBreakMinutes) 分",
                   systemImage: "gearshape")
             .foregroundStyle(Theme.text)
-            Label("每 \(roundsBeforeLongBreak) 顆進入長休", systemImage: "record.circle")
+            Label("每 \(settings.roundsBeforeLongBreak) 顆進入長休", systemImage: "record.circle")
                 .foregroundStyle(Theme.text)
         }
         .font(.subheadline)
@@ -145,7 +153,7 @@ struct FocusCycleView: View {
             if completedFocus {
                 cycleCount += 1
                 co.apply(.pomodoroCompleted(
-                    focus: focusMinutes,
+                    focus: settings.focusMinutes,
                     rest: currentRestMinutes()
                 ), modelContext: ctx)
             }
@@ -155,7 +163,7 @@ struct FocusCycleView: View {
     
     private func nextPhase(completedFocus: Bool) {
         if completedFocus {
-            if cycleCount > 0, cycleCount % max(1, roundsBeforeLongBreak) == 0 {
+            if cycleCount > 0, cycleCount % max(1, settings.roundsBeforeLongBreak) == 0 {
                 loadPhase(.longBreak)
             } else {
                 loadPhase(.shortBreak)
@@ -163,23 +171,23 @@ struct FocusCycleView: View {
         } else {
             loadPhase(.focus)
         }
-        if autoContinue { isRunning = true }
+        if settings.autoContinue { isRunning = true }
     }
     
     private func loadPhase(_ p: Phase) {
         phase = p
         switch p {
-        case .focus:      targetSeconds = max(1, focusMinutes) * 60
-        case .shortBreak: targetSeconds = max(1, shortBreakMinutes) * 60
-        case .longBreak:  targetSeconds = max(1, longBreakMinutes) * 60
+        case .focus:      targetSeconds = max(1, settings.focusMinutes) * 60
+        case .shortBreak: targetSeconds = max(1, settings.shortBreakMinutes) * 60
+        case .longBreak:  targetSeconds = max(1, settings.longBreakMinutes) * 60
         }
         secondsLeft = targetSeconds
     }
     
     private func currentRestMinutes() -> Int {
         switch phase {
-        case .shortBreak: return shortBreakMinutes
-        case .longBreak:  return longBreakMinutes
+        case .shortBreak: return settings.shortBreakMinutes
+        case .longBreak:  return settings.longBreakMinutes
         default:          return 0
         }
     }
@@ -203,6 +211,22 @@ struct FocusCycleView: View {
         case .focus:      return "專注中"
         case .shortBreak: return "短休中"
         case .longBreak:  return "長休中"
+        }
+    }
+    
+    private func phaseLabel(_ p: Phase) -> String {
+        switch p {
+        case .focus:      return "專注"
+        case .shortBreak: return "短休"
+        case .longBreak:  return "長休"
+        }
+    }
+    
+    private func minutesForPhase(_ p: Phase) -> Int {
+        switch p {
+        case .focus:      return settings.focusMinutes
+        case .shortBreak: return settings.shortBreakMinutes
+        case .longBreak:  return settings.longBreakMinutes
         }
     }
     
