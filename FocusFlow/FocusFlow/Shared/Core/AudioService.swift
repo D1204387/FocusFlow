@@ -3,7 +3,8 @@ import Foundation
 import AVFoundation
 import UIKit
 
-    /// 單例：控制背景音樂與節拍器
+
+    /// 控制背景音樂與節拍器
 final class AudioService {
     static let shared = AudioService()
     private init() {}
@@ -11,6 +12,7 @@ final class AudioService {
         // Players
     private var bgmPlayer: AVAudioPlayer?
     private var clickPlayer: AVAudioPlayer?
+    private var chimePlayer: AVAudioPlayer?
     
         // Metronome
     private var metroTimer: Timer?
@@ -46,12 +48,15 @@ final class AudioService {
         deactivateSession()
     }
     
+    
         // ---- BGM ----
     func startBGM() {
         configureSession()
         if bgmPlayer == nil {
-                // 依序嘗試你資源包裡的檔名
-            bgmPlayer = loadPlayer(names: ["city_lofi", "ambient_pulse", "nature_ambient", "light_music"], ext: "mp3")
+
+            let candidates = ["relaxing_piano", "nature_ambient", "light_music"]
+            let shuffled  = candidates.shuffled()
+            bgmPlayer = loadPlayer(names: shuffled, ext: "mp3")
         }
         bgmPlayer?.numberOfLoops = -1
         bgmPlayer?.volume = 0.5
@@ -69,7 +74,6 @@ final class AudioService {
         configureSession()
         if clickPlayer == nil {
             clickPlayer = loadPlayer(names: ["metronome_click"], ext: "wav")
-            ?? loadPlayer(names: ["completion_chime"], ext: "m4a")
             clickPlayer?.prepareToPlay()
         }
         scheduleMetronome()
@@ -93,6 +97,35 @@ final class AudioService {
         if metroTimer != nil { scheduleMetronome() }
     }
     
+        // ---- Completion Chime ✅ ----
+        /// 播放完成提示音（不影響 BGM 狀態，會自動啟用 Session）
+        // 只負責把完成音播出來（不動其他聲音、不關 session）
+    func playChime() {
+        configureSession()
+        if chimePlayer == nil {
+            chimePlayer = loadPlayer(names: ["completion_chime"], ext: "m4a")
+            chimePlayer?.prepareToPlay()
+        }
+        chimePlayer?.currentTime = 0
+        chimePlayer?.volume = 1.0
+        chimePlayer?.play()
+    }
+    
+        // 完成流程用：先停 BGM/節拍器，播完「完成音」再關閉 session
+    func playCompletionAndTearDown() {
+        stopMetronome()
+        stopBGM()
+        playChime()
+        let delay = chimePlayer?.duration ?? 1.5
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self else { return }
+            self.chimePlayer?.stop()
+            self.chimePlayer = nil
+            self.deactivateSession()
+        }
+    }
+
+    
         // MARK: - Internals
     private func scheduleMetronome() {
         metroTimer?.invalidate()
@@ -113,5 +146,5 @@ final class AudioService {
             }
         }
         return nil
-    }
+    }    
 }

@@ -123,7 +123,7 @@ struct RunningView: View {
                                 AxisValueLabel()
                             }
                         }
-                        .frame(height: 200)
+                        .frame(height: 120)
                     }
                     .padding(16)
                     .background(Theme.bg)
@@ -164,14 +164,16 @@ struct RunningView: View {
         }
     }
     
+ 
     private var settingsSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("目標 \(settings.runTargetMinutes) 分鐘", systemImage: "target")
+            Label("現在：\(currentRunStatus)", systemImage: "figure.run")
                 .foregroundStyle(Theme.text)
-            Label("背景音樂已\(settings.bgmOn ? "開啟" : "關閉")",systemImage:  settings.bgmOn ? "pause.fill" : "play.fill")
+            Label("本次設定：目標 \(settings.runTargetMinutes) 分", systemImage: "gearshape")
                 .foregroundStyle(Theme.text)
-            Label("BPM \(settings.metronomeBPM)  節拍\(settings.metronomeOn ? "開啟" : "關閉")", systemImage: "metronome.fill")
-                .foregroundStyle(Theme.text)
+            Label("音訊：\(settings.bgmOn ? "BGM 開啟" : "BGM 關閉") • BPM \(settings.metronomeBPM) \(settings.metronomeOn ? "（節拍開啟）" : "（節拍關閉）")",
+                  systemImage: "metronome.fill")
+            .foregroundStyle(Theme.text)
         }
         .font(.subheadline)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -180,6 +182,10 @@ struct RunningView: View {
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .softShadow()
+    }
+        // 小工具：對應「慢跑中 / 暫停中 / 待機」
+    private var currentRunStatus: String {
+        isRunning ? "慢跑中" : (isPaused ? "暫停中" : "待機")
     }
     
         // 當週區間（依系統地區決定週起始）
@@ -275,7 +281,7 @@ struct RunningView: View {
     private func finish() {
         isRunning = false
         isPaused = false
-        AudioService.shared.stopRunSession()
+        AudioService.shared.playCompletionAndTearDown()
         
         let sec = elapsed
         guard sec >= 60 else {reset(); return }
@@ -299,7 +305,7 @@ struct RunningView: View {
     private func reachTarget() {
         isRunning = false
         isPaused = false
-        AudioService.shared.stopRunSession()
+        AudioService.shared.playCompletionAndTearDown()
         
         let sec = max(Double(targetSeconds), elapsed)
         

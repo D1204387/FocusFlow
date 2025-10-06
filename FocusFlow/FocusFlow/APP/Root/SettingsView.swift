@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 統一設定頁（淺色系）
-/// - 跑步：藍 / 專注：綠
+/// - 跑步：藍 / 專注：綠 / 遊戲：橘
 /// - 右上角顯示可用點數（toolbarEnergy）
 struct SettingsView: View {
         // MARK: - Properties
