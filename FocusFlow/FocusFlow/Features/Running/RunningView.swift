@@ -2,7 +2,7 @@
 import SwiftUI
 import SwiftData
 import Combine
-import AudioToolbox
+import UIKit
 
     /// 跑步頁（淺色主題 / 藍色系）
 struct RunningView: View {
@@ -248,7 +248,53 @@ private struct CompletionSheet: View {
     }
 }
 
-#Preview {
-    RunningView()
+#Preview("Running • 1 分鐘示範") {
+        // In-memory SwiftData 容器（不落地）
+    let schema = Schema([RunningRecord.self, PomodoroRecord.self, GameRecord.self])
+    let container = try! ModelContainer(
+        for: schema,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    
+        // 環境物件
+    let co = ModuleCoordinator()
+    co.energy = 2
+    
+    let settings = AppSettings.shared
+    settings.runTargetMinutes = 1       // 預覽好測
+    settings.bgmOn = false              // 預設關掉，避免預覽時誤播
+    settings.metronomeOn = false
+    settings.metronomeBPM = 180
+    settings.hapticsOn = true
+    
+    return RunningView()
+        .environment(co)
+        .environment(settings)
+        .modelContainer(container)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Running • 預設 20 分鐘") {
+    let schema = Schema([RunningRecord.self, PomodoroRecord.self, GameRecord.self])
+    let container = try! ModelContainer(
+        for: schema,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    
+    let co = ModuleCoordinator()
+    co.energy = 5
+    
+    let settings = AppSettings.shared
+    settings.runTargetMinutes = 20
+    settings.bgmOn = false
+    settings.metronomeOn = false
+    settings.metronomeBPM = 180
+    settings.hapticsOn = true
+    
+    return RunningView()
+        .environment(co)
+        .environment(settings)
+        .modelContainer(container)
+        .preferredColorScheme(.light)
 }
 

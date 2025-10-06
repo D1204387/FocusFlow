@@ -247,3 +247,54 @@ struct FocusCycleView: View {
     }
 }
 
+#Preview("FocusCycle • Demo") {
+        // In-memory SwiftData（不寫入真資料）
+    let schema = Schema([RunningRecord.self, PomodoroRecord.self, GameRecord.self])
+    let container = try! ModelContainer(
+        for: schema,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    
+        // 環境物件
+    let co = ModuleCoordinator()
+    co.energy = 2                      // 隨意給一點能量
+    
+    let settings = AppSettings.shared  // 用你的單例；調成預覽友善的數值
+    settings.focusMinutes = 5
+    settings.shortBreakMinutes = 2
+    settings.longBreakMinutes = 10
+    settings.roundsBeforeLongBreak = 4
+    settings.autoContinue = false
+    
+    return FocusCycleView()
+        .environment(co)
+        .environment(settings)
+        .modelContainer(container)
+        .preferredColorScheme(.light)
+}
+
+#Preview("FocusCycle • Tiny (1min)") {
+    let schema = Schema([RunningRecord.self, PomodoroRecord.self, GameRecord.self])
+    let container = try! ModelContainer(
+        for: schema,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    
+    let co = ModuleCoordinator()
+    co.energy = 1
+    
+    let settings = AppSettings.shared
+    settings.focusMinutes = 1
+    settings.shortBreakMinutes = 1
+    settings.longBreakMinutes = 2
+    settings.roundsBeforeLongBreak = 2
+    settings.autoContinue = true
+    
+    return FocusCycleView()
+        .environment(co)
+        .environment(settings)
+        .modelContainer(container)
+        .preferredColorScheme(.light)
+}
+
+

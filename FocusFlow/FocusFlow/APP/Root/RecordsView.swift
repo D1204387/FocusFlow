@@ -2,20 +2,69 @@ import SwiftUI
 import SwiftData
 import Charts
 
+    // MARK: - Helpers (file-scope)
+
+struct SeriesPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let value: Double
+    let series: String
+}
+
+struct DayBin: Identifiable {
+    let id = UUID()
+    let date: Date
+    var runMinutes: Double
+    var focusMinutes: Double
+    var gamePlays: Int
+    
+    static func aggregate(range: DateInterval,
+                          runs: [RunningRecord],
+                          pomos: [PomodoroRecord],
+                          games: [GameRecord]) -> [DayBin] {
+        let days = Calendar.current.dates(from: range.start.startOfDay, to: range.end.startOfDay)
+        var table: [Date: DayBin] = Dictionary(uniqueKeysWithValues: days.map {
+            ($0, DayBin(date: $0, runMinutes: 0, focusMinutes: 0, gamePlays: 0))
+        })
+        for r in runs {
+            let d = r.date.startOfDay
+            if var v = table[d] { v.runMinutes += r.duration / 60; table[d] = v }
+        }
+        for p in pomos {
+            let d = p.date.startOfDay
+            if var v = table[d] { v.focusMinutes += Double(p.focus); table[d] = v }
+        }
+        for g in games {
+            let d = g.date.startOfDay
+            if var v = table[d] { v.gamePlays += 1; table[d] = v }
+        }
+        return days.compactMap { table[$0] }
+    }
+}
+
+extension Date {
+    var startOfDay: Date { Calendar.current.startOfDay(for: self) }
+    var endOfDay:   Date { Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)! }
+}
+
+extension Calendar {
+    func dates(from start: Date, to end: Date) -> [Date] {
+        var out: [Date] = []; var cur = start
+        while cur <= end { out.append(cur); cur = date(byAdding: .day, value: 1, to: cur)! }
+        return out
+    }
+}
+
+    // MARK: - Main View
+
 struct RecordsView: View {
     enum Category: String, CaseIterable, Identifiable {
-        case all = "全部"
-        case running = "跑步"
-        case focus = "專注"
-        case game = "遊戲"
+        case all = "全部", running = "跑步", focus = "專注", game = "遊戲"
         var id: Self { self }
     }
-    
     enum RangePreset: String, CaseIterable, Identifiable {
-        case week = "近 7 天"
-        case month = "近 30 天"
+        case week = "近 7 天", month = "近 30 天"
         var id: Self { self }
-        
         var interval: DateInterval {
             let end = Date()
             let start = Calendar.current.date(byAdding: .day, value: self == .week ? -6 : -29, to: end)!
@@ -34,22 +83,15 @@ struct RecordsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                        // 能量
-                    HStack {
-                        pill("能量 \(co.energy)")
-                        Spacer()
-                    }
+                    HStack { pill("能量 \(co.energy)"); Spacer() }
                     
-                        // 篩選
                     Picker("", selection: $category) {
                         ForEach(Category.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
+                    }.pickerStyle(.segmented)
                     
                     Picker("", selection: $preset) {
                         ForEach(RangePreset.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
+                    }.pickerStyle(.segmented)
                     
                     SummaryRow(bins: bins)
                     
@@ -66,6 +108,7 @@ struct RecordsView: View {
             }
             .background(Theme.bg)
             .navigationTitle("記錄")
+            .toolbarEnergy(title: "記錄", tint: .gray)
         }
         .task(id: category) { await reload() }
         .task(id: preset)   { await reload() }
@@ -74,7 +117,7 @@ struct RecordsView: View {
     
         // MARK: - Load
     private func reload() async {
-        let store = RecordsStore(context: ctx)
+        let store = RecordsStore(context: ctx)   // 你專案裡的簡易查詢器
         let range = preset.interval
         let runs  = (try? store.runs(in: range))      ?? []
         let poms  = (try? store.pomodoros(in: range)) ?? []
@@ -100,10 +143,21 @@ private struct ChartView: View {
     let bins: [DayBin]
     let category: RecordsView.Category
     
+    private var seriesData: [SeriesPoint] {
+        switch category {
+        case .running: return bins.map { .init(date: $0.date, value: $0.runMinutes,  series: "跑步") }
+        case .focus:   return bins.map { .init(date: $0.date, value: $0.focusMinutes, series: "專注") }
+        case .game:    return bins.map { .init(date: $0.date, value: Double($0.gamePlays), series: "遊戲") }
+        case .all:
+            return bins.flatMap {
+                [.init(date: $0.date, value: $0.runMinutes,  series: "跑步"),
+                 .init(date: $0.date, value: $0.focusMinutes, series: "專注")]
+            }
+        }
+    }
+    
     var body: some View {
-        let data = seriesData // 拆出，降低型別推斷複雜度
-        
-        Chart(data) { pt in
+        Chart(seriesData) { pt in
             BarMark(
                 x: .value("日期", pt.date, unit: .day),
                 y: .value("值", pt.value)
@@ -116,9 +170,7 @@ private struct ChartView: View {
                 AxisGridLine().foregroundStyle(.clear)
                 AxisTick().foregroundStyle(.clear)
                 if let d = v.as(Date.self) {
-                    AxisValueLabel {
-                        Text(d, format: .dateTime.weekday(.narrow))
-                    }
+                    AxisValueLabel { Text(d, format: .dateTime.weekday(.narrow)) }
                 }
             }
         }
@@ -131,29 +183,11 @@ private struct ChartView: View {
         .padding(12)
     }
     
-    private func color(for series: String) -> Color {
-        switch series {
-        case "跑步":  return Theme.Run.solid
-        case "專注":  return Theme.Focus.solid
-        default:      return .gray.opacity(0.35)
-        }
-    }
-    
-    private var seriesData: [SeriesPoint] {
-        switch category {
-        case .running:
-            return bins.map { SeriesPoint(date: $0.date, value: $0.runMinutes, series: "跑步") }
-        case .focus:
-            return bins.map { SeriesPoint(date: $0.date, value: $0.focusMinutes, series: "專注") }
-        case .game:
-            return bins.map { SeriesPoint(date: $0.date, value: Double($0.gamePlays), series: "遊戲") }
-        case .all:
-            return bins.flatMap {
-                [
-                    SeriesPoint(date: $0.date, value: $0.runMinutes, series: "跑步"),
-                    SeriesPoint(date: $0.date, value: $0.focusMinutes, series: "專注")
-                ]
-            }
+    private func color(for s: String) -> Color {
+        switch s {
+        case "跑步": return Theme.Run.solid
+        case "專注": return Theme.Focus.solid
+        default:     return .gray.opacity(0.35)
         }
     }
 }
@@ -162,16 +196,15 @@ private struct ChartView: View {
 
 private struct SummaryRow: View {
     let bins: [DayBin]
-    
     private var totalRun: Int   { Int(bins.reduce(0) { $0 + $1.runMinutes }) }
     private var totalFocus: Int { Int(bins.reduce(0) { $0 + $1.focusMinutes }) }
     private var totalGame: Int  { bins.reduce(0) { $0 + $1.gamePlays } }
     
     var body: some View {
         HStack(spacing: 12) {
-            stat("跑步(分)", value: totalRun, color: Theme.Run.solid)
+            stat("跑步(分)", value: totalRun,   color: Theme.Run.solid)
             stat("專注(分)", value: totalFocus, color: Theme.Focus.solid)
-            stat("遊戲(局)", value: totalGame, color: .gray)
+            stat("遊戲(局)", value: totalGame,  color: .gray)
         }
     }
     
@@ -226,63 +259,51 @@ private struct RecordsList: View {
     }
 }
 
-    // MARK: - Aggregation
-
-private struct SeriesPoint: Identifiable {
-    let id = UUID()
-    let date: Date
-    let value: Double
-    let series: String
-}
-
-private struct DayBin: Identifiable {
-    let id = UUID()
-    let date: Date
-    var runMinutes: Double
-    var focusMinutes: Double
-    var gamePlays: Int
+#Preview("記錄（假資料）") {
+        // 建 in-memory SwiftData 容器
+    let schema = Schema([RunningRecord.self, PomodoroRecord.self, GameRecord.self])
+    let container = try! ModelContainer(
+        for: schema,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    let ctx = container.mainContext
+    let cal = Calendar.current
     
-    static func aggregate(range: DateInterval,
-                          runs: [RunningRecord],
-                          pomos: [PomodoroRecord],
-                          games: [GameRecord]) -> [DayBin] {
+        // 塞 10 天的示範資料
+    for i in 0..<10 {
+        let day = cal.date(byAdding: .day, value: -i, to: .now)!
         
-        let days = Calendar.current.dates(from: range.start.startOfDay, to: range.end.startOfDay)
-        var map: [Date: DayBin] = Dictionary(uniqueKeysWithValues: days.map {
-            ($0, DayBin(date: $0, runMinutes: 0, focusMinutes: 0, gamePlays: 0))
-        })
-        
-        for r in runs {
-            let day = r.date.startOfDay
-            if var v = map[day] { v.runMinutes += r.duration/60; map[day] = v }
-        }
-        for p in pomos {
-            let day = p.date.startOfDay
-            if var v = map[day] { v.focusMinutes += Double(p.focus); map[day] = v }
-        }
-        for g in games {
-            let day = g.date.startOfDay
-            if var v = map[day] { v.gamePlays += 1; map[day] = v }
+            // 跑步（每隔一天）
+        if i % 2 == 0 {
+            let r = RunningRecord(duration: Double([600, 1200, 1800, 2400].randomElement()!)) // 秒
+            r.date = day
+            ctx.insert(r)
         }
         
-        return days.compactMap { map[$0] }
+            // 番茄（每 3 天）
+        if i % 3 == 0 {
+            let p = PomodoroRecord(focus: [15, 25, 30].randomElement()!, rest: 5)
+            p.date = day
+            ctx.insert(p)
+        }
+        
+            // 遊戲（每 4 天）
+        if i % 4 == 0 {
+            let g = GameRecord(score: [256, 512, 1024, 2048].randomElement()!, seconds: 120)
+            g.date = day
+            ctx.insert(g)
+        }
     }
-}
-
-private extension Date {
-    var startOfDay: Date { Calendar.current.startOfDay(for: self) }
-    var endOfDay: Date { Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)! }
-}
-
-private extension Calendar {
-    func dates(from start: Date, to end: Date) -> [Date] {
-        var result: [Date] = []
-        var cur = start
-        while cur <= end {
-            result.append(cur)
-            cur = date(byAdding: .day, value: 1, to: cur)!
-        }
-        return result
+    
+        // 提供能量顯示需要的 coordinator
+    let co = ModuleCoordinator()
+    co.energy = 3
+    
+    return NavigationStack {
+        RecordsView()
     }
+    .environment(co)
+    .modelContainer(container)
+    .preferredColorScheme(.light)
 }
 

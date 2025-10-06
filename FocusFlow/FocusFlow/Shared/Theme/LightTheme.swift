@@ -17,6 +17,39 @@ enum LightTheme {
         static let gradTop = Color(hex: 0x4CD495)
         static let gradBot = Color(hex: 0x96E7C3)
     }
+    enum Game {
+            // 主色（橘）
+        static let solid   = Color(hex: 0xFF8A00)
+        static let gradTop = Color(hex: 0xFFB347)
+        static let gradBot = Color(hex: 0xFFD08A)
+        
+            // 棋盤與空格底色
+        static let board = Color(.systemGray6)
+        static let empty = Color(.systemGray5)
+        
+            // 依數字大小調整飽和度（越大越深）
+        static func tile(_ v: Int) -> Color {
+            switch v {
+            case 0:    return empty
+            case 2:    return solid.opacity(0.20)
+            case 4:    return solid.opacity(0.30)
+            case 8:    return solid.opacity(0.40)
+            case 16:   return solid.opacity(0.50)
+            case 32:   return solid.opacity(0.60)
+            case 64:   return solid.opacity(0.70)
+            case 128:  return solid.opacity(0.80)
+            case 256:  return solid.opacity(0.88)
+            case 512:  return solid.opacity(0.92)
+            case 1024: return solid.opacity(0.96)
+            default:   return solid
+            }
+        }
+        
+        static func text(_ v: Int) -> Color {
+            v <= 4 ? LightTheme.text : .white
+        }
+    }
+
     
     
     static let pillBG     = Color.black.opacity(0.06)
