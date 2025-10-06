@@ -17,7 +17,6 @@ final class AppSettings {
         static let bgmOn             = "settings.bgmOn"
         static let metronomeOn       = "settings.metronomeOn"
         static let metronomeBPM      = "settings.metronomeBPM"
-        static let hapticsOn         = "settings.hapticsOn"
         
             // Focus(Pomodoro)
         static let focusMinutes      = "settings.focusMinutes"
@@ -41,9 +40,6 @@ final class AppSettings {
     }
     var metronomeBPM: Int {
         didSet { d.set(metronomeBPM, forKey: Key.metronomeBPM) }
-    }
-    var hapticsOn: Bool {
-        didSet { d.set(hapticsOn, forKey: Key.hapticsOn) }
     }
     
         // Focus
@@ -77,8 +73,6 @@ final class AppSettings {
             forKey: Key.metronomeOn) as? Bool ?? false
         metronomeBPM      = d.object(
             forKey: Key.metronomeBPM) as? Int ?? 180
-        hapticsOn         = d.object(
-            forKey: Key.hapticsOn) as? Bool ?? true
         focusMinutes      = d.object(
             forKey: Key.focusMinutes) as? Int ?? 25
         shortBreakMinutes = d.object(
@@ -98,7 +92,6 @@ final class AppSettings {
         bgmOn = true
         metronomeOn = true
         metronomeBPM = 180
-        hapticsOn = true
         
         focusMinutes = 25
         shortBreakMinutes = 5

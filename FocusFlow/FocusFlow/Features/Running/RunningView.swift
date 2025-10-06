@@ -2,7 +2,6 @@
 import SwiftUI
 import SwiftData
 import Combine
-import UIKit
 import Charts
 
     /// 跑步頁（淺色主題 / 藍色系）
@@ -251,8 +250,7 @@ struct RunningView: View {
         AudioService.shared.startRunSession(
             enableMusic: settings.bgmOn,
             enableMetronome: settings.metronomeOn,
-            bpm: settings.metronomeBPM,
-            haptics: settings.hapticsOn
+            bpm: settings.metronomeBPM
         )
     }
     
@@ -311,10 +309,6 @@ struct RunningView: View {
         
         ctx.insert(RunningRecord(duration: sec))
         co.apply(.runCompleted(minutes: Int(sec / 60)), modelContext: ctx)
-        
-        if settings.hapticsOn {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)}
-        
         showFinishSheet = true // 🎉 顯示完成視窗
     }
     
@@ -378,7 +372,6 @@ private struct DayPoint: Identifiable {
     settings.bgmOn = false              // 預設關掉，避免預覽時誤播
     settings.metronomeOn = false
     settings.metronomeBPM = 180
-    settings.hapticsOn = true
     
     return RunningView()
         .environment(co)
@@ -402,7 +395,6 @@ private struct DayPoint: Identifiable {
     settings.bgmOn = false
     settings.metronomeOn = false
     settings.metronomeBPM = 180
-    settings.hapticsOn = true
     
     return RunningView()
         .environment(co)

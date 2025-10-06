@@ -74,9 +74,7 @@ public struct SegmentedGaugeRing<Center: View>: View {
         .frame(width: size, height: size)
         .contentShape(Circle())
         .animation(animationEnabled ? animation : nil, value: progress)
-        .onChange(of: progress) { _, newValue in
-            handleProgressChange(newValue)
-        }
+
     }
     
         // MARK: - Subviews
@@ -195,26 +193,7 @@ public struct SegmentedGaugeRing<Center: View>: View {
         return majorEvery != .max && (index % majorEvery == 0)
     }
     
-    private func handleProgressChange(_ newProgress: Double) {
-            // 🆕 震動回饋
-        if hapticEnabled {
-            let oldMilestone = Int(lastProgress * 10)
-            let newMilestone = Int(newProgress * 10)
-            
-            if newMilestone > oldMilestone {
-                    // 每 10% 震動
-                HapticFeedback.impact(.light)
-            }
-            
-            if newProgress >= 1.0 && lastProgress < 1.0 {
-                    // 完成時強震動
-                HapticFeedback.notification(.success)
-            }
-        }
-        
-        lastProgress = newProgress
-    }
-    
+   
         // MARK: - Computed Properties
     
     private var innerDiameter: CGFloat {
@@ -234,15 +213,3 @@ public struct SegmentedGaugeRing<Center: View>: View {
     }
 }
 
-    // MARK: - 震動回饋輔助
-struct HapticFeedback {
-    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let generator = UIImpactFeedbackGenerator(style: style)
-        generator.impactOccurred()
-    }
-    
-    static func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(type)
-    }
-}

@@ -62,7 +62,7 @@ struct SettingsView: View {
                                     .foregroundStyle(Theme.Run.solid)
                             }
                             Divider()
-                            ToggleRow(title: "震動回饋", isOn: $settings.hapticsOn, symbol: "iphone.radiowaves.left.and.right")
+
                         }
                         
                             // MARK: 番茄（工作 / 休息 / 循環）
@@ -185,7 +185,6 @@ struct SettingsView: View {
     s.metronomeOn = true
     s.metronomeBPM = 180
     s.runTargetMinutes = 20
-    s.hapticsOn = true
     
     s.focusMinutes = 25
     s.shortBreakMinutes = 5

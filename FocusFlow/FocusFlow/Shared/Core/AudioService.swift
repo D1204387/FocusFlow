@@ -17,8 +17,7 @@ final class AudioService {
         // Metronome
     private var metroTimer: Timer?
     private(set) var bpm: Int = 180
-    private var useHaptics = true
-    private let impact = UIImpactFeedbackGenerator(style: .light)
+
     
         // MARK: - Session helpers
     private func configureSession() {
@@ -34,8 +33,7 @@ final class AudioService {
     
         // MARK: - Public API (與 RunningView 對齊)
         /// 進入跑步：依設定開啟音訊
-    func startRunSession(enableMusic: Bool, enableMetronome: Bool, bpm: Int, haptics: Bool) {
-        useHaptics = haptics
+    func startRunSession(enableMusic: Bool, enableMetronome: Bool, bpm: Int) {
         configureSession()
         if enableMusic { startBGM() }
         if enableMetronome { startMetronome(bpm: bpm) }
@@ -134,8 +132,7 @@ final class AudioService {
             guard let self else { return }
             self.clickPlayer?.currentTime = 0
             self.clickPlayer?.play()
-            if self.useHaptics { self.impact.impactOccurred() }
-        }
+            }
         RunLoop.main.add(metroTimer!, forMode: .common)
     }
     
