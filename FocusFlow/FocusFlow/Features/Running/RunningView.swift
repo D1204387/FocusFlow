@@ -3,6 +3,7 @@ import SwiftUI
 import SwiftData
 import Combine
 import UIKit
+import Charts
 
     /// 跑步頁（淺色主題 / 藍色系）
 struct RunningView: View {
@@ -16,6 +17,7 @@ struct RunningView: View {
     @State private var startAt: Date?
     @State private var now = Date()
     @State private var accumulated: TimeInterval = 0 // 暫停時的累積秒數
+    @Query(sort: \RunningRecord.date, order: .reverse) private var runs: [RunningRecord]
     
     private let tick = Timer.publish(every: 0.25, on: .main, in: .common).autoconnect()
     
@@ -37,8 +39,8 @@ struct RunningView: View {
                     
                         // 統計 pill（示意數字）
                     HStack(spacing: 10) {
-                        pill("連續 7 天", sf: "flame.fill", tint: Theme.Run.solid)
-                        pill("本週 85 分鐘", sf: "clock.badge.checkmark", tint: Theme.Run.solid)
+                        pill("連續 \(streakDays) 天", sf: "flame.fill", tint: Theme.Run.solid)
+                        pill("本週 \(weeklyMinutes) 分鐘", sf: "clock.badge.checkmark", tint: Theme.Run.solid)
                         Spacer()
                     }
                     
@@ -82,6 +84,53 @@ struct RunningView: View {
                         }
                     }
                     .padding()
+                        // 本週完成狀態卡片（圖表）
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("本週完成狀態")
+                                .font(.headline)
+                                .foregroundStyle(Theme.text)
+                            Spacer()
+                            Text("\(weeklyPercent)%")
+                                .font(.headline.bold())
+                                .foregroundStyle(Theme.Run.solid)
+                        }
+                        
+                        Chart(weekDays.map { day in
+                            DayPoint(date: day, minutes: minutesByDay[Calendar.current.startOfDay(for: day)] ?? 0)
+                        }) { p in
+                            BarMark(
+                                x: .value("日期", p.date, unit: .day),
+                                y: .value("分鐘", p.minutes)
+                            )
+                            .foregroundStyle(Theme.Run.solid)
+                            .cornerRadius(6)
+                        }
+                        .chartXAxis {
+                            AxisMarks(values: .stride(by: .day)) { v in
+                                AxisGridLine().foregroundStyle(.clear)
+                                AxisTick().foregroundStyle(.clear)
+                                if let d = v.as(Date.self) {
+                                    AxisValueLabel {
+                                        Text(d, format: .dateTime.weekday(.narrow)) // 一、二、三…
+                                    }
+                                }
+                            }
+                        }
+                        .chartYAxis {
+                            AxisMarks { _ in
+                                AxisGridLine().foregroundStyle(Theme.cardStroke)
+                                AxisValueLabel()
+                            }
+                        }
+                        .frame(height: 200)
+                    }
+                    .padding(16)
+                    .background(Theme.bg)
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .softShadow()
+                    
                 }
                 .background(Theme.bg)
                 .toolbarEnergy(title: "慢跑時光", tint: Theme.Run.solid)
@@ -131,6 +180,58 @@ struct RunningView: View {
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .softShadow()
+    }
+    
+        // 當週區間（依系統地區決定週起始）
+    private var weekInterval: DateInterval {
+        Calendar.current.dateInterval(of: .weekOfYear, for: Date())!
+    }
+    
+        // 本週所有日期（7 天）
+    private var weekDays: [Date] {
+        let start = Calendar.current.startOfDay(for: weekInterval.start)
+        return (0..<7).compactMap { Calendar.current.date(byAdding: .day, value: $0, to: start) }
+    }
+    
+        // 本週的所有跑步紀錄
+    private var runsThisWeek: [RunningRecord] {
+        runs.filter { $0.date >= weekInterval.start && $0.date < weekInterval.end }
+    }
+    
+        // 本週總分鐘數
+    private var weeklyMinutes: Int {
+        Int(runsThisWeek.reduce(0) { $0 + $1.duration } / 60)
+    }
+    
+        // 每日分鐘（用於圖表）
+    private var minutesByDay: [Date: Double] {
+        var map: [Date: Double] = [:]
+        for r in runsThisWeek {
+            let day = Calendar.current.startOfDay(for: r.date)
+            map[day, default: 0] += r.duration / 60
+        }
+        return map
+    }
+    
+        // 本週完成百分比 = 本週分鐘 / (每天目標 * 7)
+    private var weeklyPercent: Int {
+        let denom = max(1, settings.runTargetMinutes * 7)
+        let pct = (Double(weeklyMinutes) / Double(denom)) * 100
+        return min(100, max(0, Int(round(pct))))
+    }
+    
+        // 連續天數（從今天開始往回數，一天有任意跑步即算 1）
+    private var streakDays: Int {
+        let daysWithRun: Set<Date> = Set(
+            runs.map { Calendar.current.startOfDay(for: $0.date) }
+        )
+        var c = 0
+        var d = Calendar.current.startOfDay(for: Date())
+        while daysWithRun.contains(d) {
+            c += 1
+            d = Calendar.current.date(byAdding: .day, value: -1, to: d)!
+        }
+        return c
     }
     
         // MARK: - Actions
@@ -247,6 +348,12 @@ private struct CompletionSheet: View {
         .presentationDetents([.medium])
     }
 }
+private struct DayPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let minutes: Double
+}
+
 
 #Preview("Running • 1 分鐘示範") {
         // In-memory SwiftData 容器（不落地）
