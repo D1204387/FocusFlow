@@ -38,8 +38,8 @@ struct RunningView: View {
                     
                         // 統計 pill（示意數字）
                     HStack(spacing: 10) {
-                        pill("連續 \(streakDays) 天", sf: "flame.fill", tint: Theme.Run.solid)
-                        pill("本週 \(weeklyMinutes) 分鐘", sf: "clock.badge.checkmark", tint: Theme.Run.solid)
+                        InfoChip("連續 \(streakDays) 天", icon: "flame.fill", tint: Theme.Run.solid)
+                        InfoChip("本週 \(weeklyMinutes) 分鐘", icon: "clock.badge.checkmark", tint: Theme.Run.solid)
                         Spacer()
                     }
                     
@@ -163,14 +163,14 @@ struct RunningView: View {
         }
     }
     
- 
+    
     private var settingsSummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("現在：\(currentRunStatus)", systemImage: "figure.run")
+        StatusSummaryCard{
+            Label("現在：\(isRunning ? "進行中" : (isPaused ? "暫停" : "待機"))", systemImage: "bolt.circle")
                 .foregroundStyle(Theme.text)
-            Label("本次設定：目標 \(settings.runTargetMinutes) 分", systemImage: "gearshape")
+            Label("本次設定：目標 \(settings.runTargetMinutes) 分", systemImage: "target")
                 .foregroundStyle(Theme.text)
-            Label("音訊：\(settings.bgmOn ? "BGM 開啟" : "BGM 關閉") • BPM \(settings.metronomeBPM) \(settings.metronomeOn ? "（節拍開啟）" : "（節拍關閉）")",
+            Label("音訊：\(settings.bgmOn ? "開啟" : "關閉") • BPM \(settings.metronomeBPM) (節拍：\(settings.metronomeOn ? "開啟" : "（關閉）")",
                   systemImage: "metronome.fill")
             .foregroundStyle(Theme.text)
         }
@@ -178,14 +178,14 @@ struct RunningView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(.thinMaterial)
+        .background(Theme.cardBG)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .softShadow()
     }
-        // 小工具：對應「慢跑中 / 暫停中 / 待機」
-    private var currentRunStatus: String {
-        isRunning ? "慢跑中" : (isPaused ? "暫停中" : "待機")
-    }
+        //        // 小工具：對應「慢跑中 / 暫停中 / 待機」
+        //    private var currentRunStatus: String {
+        //        isRunning ? "慢跑中" : (isPaused ? "暫停中" : "待機")
+        //    }
     
         // 當週區間（依系統地區決定週起始）
     private var weekInterval: DateInterval {

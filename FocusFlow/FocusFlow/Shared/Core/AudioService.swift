@@ -17,7 +17,7 @@ final class AudioService {
         // Metronome
     private var metroTimer: Timer?
     private(set) var bpm: Int = 180
-
+    
     
         // MARK: - Session helpers
     private func configureSession() {
@@ -51,7 +51,7 @@ final class AudioService {
     func startBGM() {
         configureSession()
         if bgmPlayer == nil {
-
+            
             let candidates = ["relaxing_piano", "nature_ambient", "light_music"]
             let shuffled  = candidates.shuffled()
             bgmPlayer = loadPlayer(names: shuffled, ext: "mp3")
@@ -122,7 +122,7 @@ final class AudioService {
             self.deactivateSession()
         }
     }
-
+    
     
         // MARK: - Internals
     private func scheduleMetronome() {
@@ -132,7 +132,7 @@ final class AudioService {
             guard let self else { return }
             self.clickPlayer?.currentTime = 0
             self.clickPlayer?.play()
-            }
+        }
         RunLoop.main.add(metroTimer!, forMode: .common)
     }
     
@@ -143,5 +143,5 @@ final class AudioService {
             }
         }
         return nil
-    }    
+    }
 }

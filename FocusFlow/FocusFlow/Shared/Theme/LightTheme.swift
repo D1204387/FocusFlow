@@ -49,10 +49,13 @@ enum LightTheme {
             v <= 4 ? LightTheme.text : .white
         }
     }
-
     
+        // 固定卡片與膠囊的底色（避免 Material 造成亮度浮動）
+    static let cardBG     = Color.white.opacity(0.92)   // 卡片底
+    static let chipBG     = Color.black.opacity(0.06)   // 膠囊底（等於你原本的 pillBG）
     
-    static let pillBG     = Color.black.opacity(0.06)
+        // 也可以把既有別名對齊
+    static let pillBG     = chipBG
     static let cardStroke = Color.black.opacity(0.08)
     
     static let softShadow = ShadowStyle(color: .black.opacity(0.08), radius: 12, y: 6)

@@ -7,7 +7,7 @@ struct FocusCycleView: View {
     @Environment(ModuleCoordinator.self) private var co
     @Environment(AppSettings.self) private var settings
     
-
+    
         // 狀態
     enum Phase { case focus, shortBreak, longBreak }
     @State private var phase: Phase = .focus
@@ -44,12 +44,12 @@ struct FocusCycleView: View {
                 
                     // 頂部統計
                 HStack(spacing: 10) {
-                    pill("🍅 \(weekdayShort) 今天 \(cycleCount) 顆",
-                         sf: "record.circle",
-                         tint: Theme.Focus.solid)
-                    pill("\(phaseLabel(phase)) 剩餘 \(max(0, secondsLeft / 60)) 分",
-                         sf: iconForPhase(phase),
-                         tint: Theme.Focus.solid)
+                    InfoChip("🍅 \(weekdayShort) 今天 \(cycleCount) 顆",
+                             icon: "record.circle",
+                             tint: Theme.Focus.solid)
+                    InfoChip("\(phaseLabel(phase)) 剩餘 \(max(0, secondsLeft / 60)) 分",
+                             icon: iconForPhase(phase),
+                             tint: Theme.Focus.solid)
                     Spacer()
                 }
                 
@@ -106,11 +106,11 @@ struct FocusCycleView: View {
             guard !isRunning, phase == .longBreak else { return }
             loadPhase(.longBreak)
         }
-
+        
     }
     
     private var settingsSummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        StatusSummaryCard {
             Label("現在：\(titleForPhase(phase))", systemImage: iconForPhase(phase))
                 .foregroundStyle(Theme.text)
             Label("本次設定：專注 \(settings.focusMinutes) 分 • 短休 \(settings.shortBreakMinutes) 分 • 長休 \(settings.longBreakMinutes) 分",
@@ -123,7 +123,7 @@ struct FocusCycleView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(.thinMaterial)
+        .background(Theme.cardBG)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .softShadow()
     }
