@@ -8,20 +8,20 @@ enum LightTheme {
     static let track     = Color.black.opacity(0.08)
     
     enum Run {
-        static let solid   = Color(hex: 0x1677FF)
-        static let gradTop = Color(hex: 0x3AA0FF)
-        static let gradBot = Color(hex: 0x79C0FF)
+        static let solid  : Color = .blue
+        static let gradTop: Color = .blue.opacity(0.90)
+        static let gradBot: Color = .blue.opacity(0.70)
     }
     enum Focus {
-        static let solid   = Color(hex: 0x2EBB74)
-        static let gradTop = Color(hex: 0x4CD495)
-        static let gradBot = Color(hex: 0x96E7C3)
+        static let solid  : Color = .green
+        static let gradTop: Color = .green.opacity(0.90)
+        static let gradBot: Color = .green.opacity(0.70)
     }
     enum Game {
             // 主色（橘）
-        static let solid   = Color(hex: 0xFF8A00)
-        static let gradTop = Color(hex: 0xFFB347)
-        static let gradBot = Color(hex: 0xFFD08A)
+        static let solid  : Color = .orange
+        static let gradTop: Color = .orange.opacity(0.90)
+        static let gradBot: Color = .orange.opacity(0.70)
         
             // 棋盤與空格底色
         static let board = Color(.systemGray6)
