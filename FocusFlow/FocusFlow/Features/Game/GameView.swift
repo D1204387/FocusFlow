@@ -7,7 +7,7 @@ struct GameView: View {
     @State private var game = GameModel()
     @State private var showLeaderboard = false
     
-    private let costToPlay = 2            // 與 RewardRules/ModuleCoordinator 對齊
+    private let costToPlay = 1            // 與 RewardRules/ModuleCoordinator 對齊
     private var unlocked: Bool { co.energy >= costToPlay }
     
     var body: some View {
@@ -208,8 +208,8 @@ struct LeaderboardView: View {
     }
 }
 
-#Preview("遊戲（解鎖：能量 2）") {
-    let co = ModuleCoordinator(); co.energy = 2
+#Preview("遊戲（解鎖：能量 1）") {
+    let co = ModuleCoordinator(); co.energy = 1
     return GameView()
         .environment(co)
         .preferredColorScheme(.light)
