@@ -62,6 +62,9 @@ final class AppSettings {
     var keepScreenOn: Bool {
         didSet { d.set(keepScreenOn, forKey: Key.keepScreenOn) }
     }
+    var pomodoroTargetPerDay: Int {
+        didSet { d.set(pomodoroTargetPerDay, forKey: "settings.pomodoroTargetPerDay") }
+    }
     
     private init() {
             // default values
@@ -85,6 +88,7 @@ final class AppSettings {
             forKey: Key.autoContinue) as? Bool ?? true
         keepScreenOn      = d.object(
             forKey: Key.keepScreenOn) as? Bool ?? true
+        pomodoroTargetPerDay = d.object(forKey: "settings.pomodoroTargetPerDay") as? Int ?? 1
     }
         // MARK: - Utilities
     func reset() {
@@ -100,6 +104,7 @@ final class AppSettings {
         autoContinue = true
         
         keepScreenOn = true
+        pomodoroTargetPerDay = 1
     }
 }
 

@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import SwiftData
+import Charts
 
 struct FocusCycleView: View {
     @Environment(\.modelContext) private var ctx
@@ -15,6 +16,11 @@ struct FocusCycleView: View {
     @State private var targetSeconds: Int = 25 * 60
     @State private var cycleCount: Int = 0
     @State private var isRunning = false
+    @State private var showAddTask = false
+    @State private var currentTask: TaskModel? = nil
+    @State private var tasks: [TaskModel] = []
+    @State private var showFinishSheet = false
+    @State private var finishedTask: TaskModel? = nil
     
         // 計時
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -34,6 +40,12 @@ struct FocusCycleView: View {
             content
                 .background(Theme.bg)
                 .toolbarEnergy(title: "專注番茄", tint: Theme.Focus.solid)
+        }
+        .sheet(isPresented: $showFinishSheet) {
+            CompletionSheet(task: finishedTask, tint: Theme.Focus.solid) {
+                showFinishSheet = false
+                finishedTask = nil
+            }
         }
     }
     
@@ -60,11 +72,12 @@ struct FocusCycleView: View {
                     tickCount: 60,
                     tickSize: .init(width: 8, height: 34),
                     innerPadding: 18,
+                    startAngle: .degrees(0), // 從3點鐘方向開始
                     active: colorForPhase(phase),
                     inactive: Color(.systemGray4)
                 ) {
                     VStack(spacing: 6) {
-                        Text(titleForPhase(phase))
+                        Text(currentTask?.name ?? titleForPhase(phase))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                         TimeCluster(
@@ -75,6 +88,13 @@ struct FocusCycleView: View {
                     }
                 }
                 .padding(.top, 6)
+                
+                    // 新增任務按鈕移到時鐘下方
+                Button(action: { showAddTask = true }) {
+                    Text("新增任務 +")
+                        .foregroundColor(.black)
+                }
+                .buttonStyle(PrimaryButtonStyle(.tertiary(Theme.Focus.solid)))
                 
                     // 當前這顆的設定摘要
                 settingsSummary
@@ -89,8 +109,88 @@ struct FocusCycleView: View {
                     Button("重置") { resetAll() }
                         .buttonStyle(PrimaryButtonStyle(.secondary(Theme.Focus.solid)))
                 }
+                    // 任務紀錄列表移到控制按鈕下方，並加上完成打勾圖案
+                if !tasks.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("任務紀錄")
+                            .font(.subheadline)
+                            .bold()
+                            .padding(.top, 4)
+                        ForEach(tasks) { task in
+                            HStack {
+                                Text(task.name)
+                                    .font(.body)
+                                Spacer()
+                                Text(String(format: "%02d:%02d", task.minutes, task.seconds))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    // 完成打勾圖案
+                                if task.isCompleted {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
+                            // 新增長條圖
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("本週完成狀態")
+                                    .font(.headline)
+                                    .foregroundStyle(Theme.text)
+                                Spacer()
+                                Text("\(weeklyPercent)%")
+                                    .font(.headline.bold())
+                                    .foregroundStyle(Theme.Focus.solid)
+                            }
+                            Chart(weekDays.map { day in
+                                DayPoint(date: day, count: pomodorosByDay[Calendar.current.startOfDay(for: day)] ?? 0)
+                            }) { p in
+                                BarMark(
+                                    x: .value("日期", p.date, unit: .day),
+                                    y: .value("番茄數", p.count)
+                                )
+                                .foregroundStyle(Theme.Focus.solid)
+                                .cornerRadius(6)
+                            }
+                            .chartXAxis {
+                                AxisMarks(values: .stride(by: .day)) { v in
+                                    AxisGridLine().foregroundStyle(.clear)
+                                    AxisTick().foregroundStyle(.clear)
+                                    if let d = v.as(Date.self) {
+                                        AxisValueLabel {
+                                            Text(d, format: .dateTime.weekday(.narrow)) // 一、二、三…
+                                        }
+                                    }
+                                }
+                            }
+                            .chartYAxis {
+                                AxisMarks { _ in
+                                    AxisGridLine().foregroundStyle(Theme.cardStroke)
+                                    AxisValueLabel()
+                                }
+                            }
+                            .frame(height: 120)
+                        }
+                        .padding(16)
+                        .background(Theme.bg)
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .softShadow()
+                    }
+                    .padding(.horizontal, 4)
+                }
             }
             .padding()
+        }
+        .sheet(isPresented: $showAddTask) {
+            AddTaskView { task in
+                currentTask = task
+                tasks.append(task)
+                phase = .focus
+                targetSeconds = task.totalSeconds
+                secondsLeft = task.totalSeconds
+            }
         }
         .onAppear { loadPhase(.focus) }
         .onReceive(tick) { _ in countdownIfNeeded() }
@@ -129,7 +229,14 @@ struct FocusCycleView: View {
     }
     
         // MARK: - 行為
-    private func start() { isRunning = true }
+    private func start() {
+        isRunning = true
+            // 若有任務，啟動時用任務時間
+        if let task = currentTask {
+            targetSeconds = task.totalSeconds
+            secondsLeft = task.totalSeconds
+        }
+    }
     private func pause() { isRunning = false }
     
     private func resetAll() {
@@ -152,10 +259,17 @@ struct FocusCycleView: View {
             let completedFocus = (phase == .focus)
             if completedFocus {
                 cycleCount += 1
+                ctx.insert(PomodoroRecord(date: .now, focus: targetSeconds / 60, rest: currentRestMinutes()))
                 co.apply(.pomodoroCompleted(
                     focus: settings.focusMinutes,
                     rest: currentRestMinutes()
                 ), modelContext: ctx)
+                    // 標記 currentTask 為完成
+                if let currentId = currentTask?.id, let idx = tasks.firstIndex(where: { $0.id == currentId }) {
+                    tasks[idx].isCompleted = true
+                    finishedTask = tasks[idx]
+                    showFinishSheet = true // 顯示完成提示
+                }
             }
             nextPhase(completedFocus: completedFocus)
         }
@@ -245,6 +359,41 @@ struct FocusCycleView: View {
         case .longBreak:  return "bed.double"
         }
     }
+    
+    @Query(sort: \PomodoroRecord.date, order: .reverse) private var pomodoros: [PomodoroRecord]
+    
+        // 本週區間（依系統地區決定週起始）
+    private var weekInterval: DateInterval {
+        Calendar.current.dateInterval(of: .weekOfYear, for: Date())!
+    }
+        // 本週所有日期（7 天）
+    private var weekDays: [Date] {
+        let start = Calendar.current.startOfDay(for: weekInterval.start)
+        return (0..<7).compactMap { Calendar.current.date(byAdding: .day, value: $0, to: start) }
+    }
+        // 本週的所有番茄紀錄
+    private var pomodorosThisWeek: [PomodoroRecord] {
+        pomodoros.filter { $0.date >= weekInterval.start && $0.date < weekInterval.end }
+    }
+        // 每日番茄數（用於圖表）
+    private var pomodorosByDay: [Date: Int] {
+        var map: [Date: Int] = [:]
+        for r in pomodorosThisWeek {
+            let day = Calendar.current.startOfDay(for: r.date)
+            map[day, default: 0] += 1
+        }
+        return map
+    }
+        // 本週總番茄數
+    private var weeklyPomodoroCount: Int {
+        pomodorosThisWeek.count
+    }
+        // 本週完成百分比 = 本週番茄 / (每天目標 * 7)
+    private var weeklyPercent: Int {
+        let denom = max(1, settings.pomodoroTargetPerDay * 7)
+        let pct = (Double(weeklyPomodoroCount) / Double(denom)) * 100
+        return min(100, max(0, Int(round(pct))))
+    }
 }
 
 #Preview("FocusCycle • Demo") {
@@ -297,4 +446,36 @@ struct FocusCycleView: View {
         .preferredColorScheme(.light)
 }
 
+private struct DayPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let count: Int
+}
 
+private struct CompletionSheet: View {
+    let task: TaskModel?
+    let tint: Color
+    var onClose: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(tint)
+            if let task = task {
+                Text("完成『\(task.name)』！")
+                    .font(.title2).bold()
+                Text("已完成 \(task.minutes) 分鐘，太棒了！")
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("已完成專注任務！")
+                    .font(.title2).bold()
+            }
+            Button("好的") { onClose() }
+                .buttonStyle(PrimaryButtonStyle(.primary(tint)))
+                .padding(.top, 8)
+        }
+        .padding(28)
+        .presentationDetents([.medium])
+    }
+}

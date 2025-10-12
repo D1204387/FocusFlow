@@ -131,6 +131,7 @@ struct RunningView: View {
                     .softShadow()
                     
                 }
+                .padding(.horizontal, 16) // 讓內容不貼齊螢幕邊界
                 .background(Theme.bg)
                 .toolbarEnergy(title: "慢跑時光", tint: Theme.Run.solid)
                 .onAppear { AudioService.shared.stopRunSession() }
@@ -170,7 +171,7 @@ struct RunningView: View {
                 .foregroundStyle(Theme.text)
             Label("本次設定：目標 \(settings.runTargetMinutes) 分", systemImage: "target")
                 .foregroundStyle(Theme.text)
-            Label("音訊：\(settings.bgmOn ? "開啟" : "關閉") • BPM \(settings.metronomeBPM) (節拍：\(settings.metronomeOn ? "開啟" : "（關閉）")",
+            Label("音訊：\(settings.bgmOn ? "開啟" : "關閉") • BPM \(settings.metronomeBPM) (節拍)：\(settings.metronomeOn ? "開啟" : "關閉")",
                   systemImage: "metronome.fill")
             .foregroundStyle(Theme.text)
         }
