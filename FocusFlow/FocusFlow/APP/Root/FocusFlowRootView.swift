@@ -16,10 +16,10 @@ struct FocusFlowRootView: View {
         TabView(selection: $tab) {
             RunningView().tabItem { Label("跑步", systemImage: "figure.run") }
             FocusCycleView().tabItem { Label("專注", systemImage: "timer") } // 專注入口
- // ← 專注的入口
+ 
             RecordsView().tabItem { Label("記錄", systemImage: "chart.bar") }
             GameView().tabItem { Label("遊戲", systemImage: "gamecontroller.fill") }
-//            GameModulePlaceholder().tabItem { Label("遊戲", systemImage: "gamecontroller") }
+
             
             SettingsView().tabItem { Label("設定", systemImage: "gear") }
         }
@@ -61,7 +61,7 @@ struct FocusFlowRootView: View {
         // 3) Environments
     let co = ModuleCoordinator()
     co.energy = 3                                   // 一般情境：有能量
-    let settings = AppSettings.shared               // 用你的單例
+    let settings = AppSettings.shared    
     
     return FocusFlowRootView()
         .environment(co)
