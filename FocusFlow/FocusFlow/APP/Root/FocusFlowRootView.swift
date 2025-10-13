@@ -16,7 +16,7 @@ struct FocusFlowRootView: View {
         TabView(selection: $tab) {
             RunningView().tabItem { Label("跑步", systemImage: "figure.run") }
             FocusCycleView().tabItem { Label("專注", systemImage: "timer") } // 專注入口
-//            FocusModulePlaceholder().tabItem { Label("專注", systemImage: "timer") } // ← 專注的入口
+ // ← 專注的入口
             RecordsView().tabItem { Label("記錄", systemImage: "chart.bar") }
             GameView().tabItem { Label("遊戲", systemImage: "gamecontroller.fill") }
 //            GameModulePlaceholder().tabItem { Label("遊戲", systemImage: "gamecontroller") }

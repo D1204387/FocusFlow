@@ -1,16 +1,6 @@
-    //
-    //  FocusFlowWidget.swift
-    //  FocusFlowWidgetsExtension
-    //
-    //  顯示：慢跑狀態、本週累積分鐘、連續天數（無互動）
-    //  依賴 Shared/RunningShared.swift（RunStore / RunningState）
-    //  App 端請定期寫入：run_weeklyMinutes、run_streakDays 兩個整數到 App Group
-    //
-
 import WidgetKit
 import SwiftUI
 
-    // 小工具需要的資料
 struct RunSummaryEntry: TimelineEntry {
     let date: Date
     let phase: RunningState.Phase
@@ -18,94 +8,152 @@ struct RunSummaryEntry: TimelineEntry {
     let streakDays: Int
 }
 
-    // Provider：讀取 App Group 中的資料，決定刷新頻率
 struct RunSummaryProvider: TimelineProvider {
-    func placeholder(in context: Context) -> RunSummaryEntry {
-        RunSummaryEntry(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0)
+    func placeholder(in: Context) -> RunSummaryEntry {
+        .init(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0)
     }
-    
-    func getSnapshot(in context: Context, completion: @escaping (RunSummaryEntry) -> Void) {
+    func getSnapshot(in: Context, completion: @escaping (RunSummaryEntry)->Void) {
         completion(loadEntry())
     }
-    
-    func getTimeline(in context: Context, completion: @escaping (Timeline<RunSummaryEntry>) -> Void) {
-        let entry = loadEntry()
-            // 跑步中就 30 秒刷新；否則 30 分鐘
-        let next = Date().addingTimeInterval(entry.phase == .running ? 30 : 1800)
-        completion(Timeline(entries: [entry], policy: .after(next)))
+    func getTimeline(in: Context, completion: @escaping (Timeline<RunSummaryEntry>)->Void) {
+        let e = loadEntry()
+        let next = Date().addingTimeInterval(e.phase == .running ? 30 : 1800)
+        completion(Timeline(entries: [e], policy: .after(next)))
     }
-    
     private func loadEntry() -> RunSummaryEntry {
-            // 1) 跑步即時狀態（來自 Shared/RunStore）
-        let state = RunStore.load()
-        
-            // 2) 本週分鐘 / 連續天數（請由 App 端更新到 App Group）
-        let ud = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")!
-        let weekly = ud.integer(forKey: "run_weeklyMinutes")
-        let streak = ud.integer(forKey: "run_streakDays")
-        
-        return RunSummaryEntry(date: .now, phase: state.phase, weeklyMinutes: weekly, streakDays: streak)
+        let phase = RunStore.load().phase
+        let (weekly, streak) = WidgetDataManager.shared.computeRunSummary()
+        return .init(date: .now, phase: phase, weeklyMinutes: weekly, streakDays: streak)
     }
 }
 
-    // UI：沿用同學的版型
 struct FocusFlowWidgetEntryView: View {
-    var entry: RunSummaryEntry
+    let entry: RunSummaryEntry
     @Environment(\.widgetFamily) private var family
     
     var body: some View {
+        switch family {
+        case .systemSmall: smallView
+        default: mediumView
+        }
+    }
+    
+        // MARK: - Small
+    private var smallView: some View {
         VStack(alignment: .leading, spacing: 8) {
-                // 標頭
-            HStack {
+            HStack(spacing: 6) {
                 Image(systemName: "bolt.fill")
                 Text("FocusFlow")
-                    .fontWeight(.semibold)
+                    .font(.subheadline).fontWeight(.semibold)
+                    .lineLimit(1)
             }
             .foregroundStyle(.blue)
-            .padding(.bottom, 4)
             
-                // 內容
-            Text("慢跑狀態：\(statusText)")
-                .font(.subheadline)
-            Text("本週累積：\(entry.weeklyMinutes) 分鐘")
-                .font(.subheadline)
-            Text("連續天數：\(entry.streakDays) 天")
-                .font(.subheadline)
+            Text(statusText)
+                .font(.title3).fontWeight(.bold)
+                .foregroundStyle(phaseColor)
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(phaseColor.opacity(0.12), in: Capsule())
             
-            if family != .systemSmall { Spacer() }
+            HStack {
+                Image(systemName: "clock.badge.checkmark")
+                Text("\(entry.weeklyMinutes) 分").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            
+            HStack {
+                Image(systemName: "flame.fill")
+                Text("\(entry.streakDays) 天").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            
+            Spacer(minLength: 0)
         }
-        .padding()
+        .padding(12)
         .containerBackground(.fill.tertiary, for: .widget)
     }
     
-    private var statusText: String {
-        switch entry.phase {
-        case .running: return "跑步中"
-        case .paused:  return "已暫停"
-        case .idle:    return "待機"
+        // MARK: - Medium
+    private var mediumView: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "figure.run")
+                    Text(statusText)
+                        .font(.headline).fontWeight(.semibold)
+                        .foregroundStyle(phaseColor)
+                }
+                Text(subtitleText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            
+            Spacer()
+            
+            metricCard(title: "本週", value: "\(entry.weeklyMinutes)", unit: "分", icon: "clock.badge.checkmark")
+            metricCard(title: "連續", value: "\(entry.streakDays)", unit: "天", icon: "flame.fill")
         }
+        .padding(14)
+        .containerBackground(.fill.tertiary, for: .widget)
+    }
+    
+        // 小卡片
+    private func metricCard(title: String, value: String, unit: String, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(title).font(.caption).foregroundStyle(.secondary)
+            }
+            Text(value).font(.title3).bold().monospacedDigit()
+            Text(unit).font(.caption2).foregroundStyle(.secondary)
+        }
+        .padding(10)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+    
+        // 文字與顏色
+    private var statusText: String {
+        switch entry.phase { case .running: "跑步中"; case .paused: "暫停"; case .idle: "待機" }
+    }
+    private var subtitleText: String {
+        switch entry.phase {
+        case .running: "保持配速，加油！"
+        case .paused:  "點按繼續於 App"
+        case .idle:    "今天動一動？"
+        }
+    }
+    private var phaseColor: Color {
+        switch entry.phase { case .running: .green; case .paused: .orange; case .idle: .gray }
     }
 }
 
-    // 註冊 Widget（注意 kind 要在專案中唯一）
 struct FocusFlowWidget: Widget {
-    let kind: String = "FocusFlowRunningSummary"
-    
+    private let kind = "FocusFlowRunningSummary"
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: RunSummaryProvider()) { entry in
             FocusFlowWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("跑步摘要")
-        .description("顯示慢跑狀態、本週累積與連續天數（無互動）。")
+        .description("顯示慢跑狀態、本週累積與連續天數。")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
-    // 預覽
+    // MARK: - Previews
 #Preview(as: .systemSmall) {
     FocusFlowWidget()
 } timeline: {
-    RunSummaryEntry(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0)
     RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 42, streakDays: 3)
+    RunSummaryEntry(date: .now, phase: .idle,    weeklyMinutes: 0,  streakDays: 0)
+}
+
+#Preview(as: .systemMedium) {
+    FocusFlowWidget()
+} timeline: {
+    RunSummaryEntry(date: .now, phase: .paused,  weeklyMinutes: 18, streakDays: 5)
+    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 60, streakDays: 10)
 }
 

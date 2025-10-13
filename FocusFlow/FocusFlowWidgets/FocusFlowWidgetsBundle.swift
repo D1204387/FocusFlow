@@ -5,8 +5,6 @@ import SwiftUI
 struct FocusFlowWidgetsBundle: WidgetBundle {
     var body: some Widget {
         PomodoroWidget()
-        RunningWidget()
+        FocusFlowWidget()
     }
 }
-
-

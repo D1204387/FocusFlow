@@ -45,26 +45,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		930DE8602E9CE502005E078C /* Exceptions for "FocusFlowWidgets" folder in "FocusFlowWidgetsExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				FocusFlowWidgetsBundle.swift,
-				Info.plist,
-				PomodoroWidget.swift,
-			);
-			target = 930DE84E2E9CE501005E078C /* FocusFlowWidgetsExtension */;
-		};
 		930DE8642E9CE572005E078C /* Exceptions for "FocusFlow" folder in "FocusFlowWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Shared/FocusFlowShared.swift,
-				Shared/RunningShared.swift,
+				Shared/Models/PomodoroRecord.swift,
+				Shared/Models/RunningRecord.swift,
 			);
 			target = 930DE84E2E9CE501005E078C /* FocusFlowWidgetsExtension */;
 		};
 		930DE86B2E9CEB46005E078C /* Exceptions for "FocusFlowWidgets" folder in "FocusFlowWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				FocusFlowWidget.swift,
 				FocusFlowWidgetsBundle.swift,
 				PomodoroWidget.swift,
 			);
@@ -85,14 +78,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				930DE86B2E9CEB46005E078C /* Exceptions for "FocusFlowWidgets" folder in "FocusFlowWidgetsExtension" target */,
-			);
-			path = FocusFlowWidgets;
-			sourceTree = "<group>";
-		};
-		930DE8522E9CE501005E078C /* FocusFlowWidgets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				930DE8602E9CE502005E078C /* Exceptions for "FocusFlowWidgets" folder in "FocusFlowWidgetsExtension" target */,
 			);
 			path = FocusFlowWidgets;
 			sourceTree = "<group>";
@@ -143,7 +128,6 @@
 				930DE8462E9C9D9F005E078C /* FocusFlowWidgetsExtension.entitlements */,
 				939C01512E8D88D000D9E5A2 /* FocusFlow */,
 				930DE8362E9C9D82005E078C /* FocusFlowWidgets */,
-				930DE8522E9CE501005E078C /* FocusFlowWidgets */,
 				930DE8312E9C9D82005E078C /* Frameworks */,
 				93F7D3C82E8711CC00888EC8 /* Products */,
 			);
@@ -173,9 +157,6 @@
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				930DE8522E9CE501005E078C /* FocusFlowWidgets */,
 			);
 			name = FocusFlowWidgetsExtension;
 			packageProductDependencies = (

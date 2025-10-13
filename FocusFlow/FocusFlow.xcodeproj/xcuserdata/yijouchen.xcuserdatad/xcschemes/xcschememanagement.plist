@@ -12,12 +12,25 @@
 		<key>FocusFlow.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>1</integer>
 		</dict>
 		<key>FocusFlowWidgetsExtension.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>1</integer>
+			<integer>0</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>930DE84E2E9CE501005E078C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>939C014F2E8D88D000D9E5A2</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>
