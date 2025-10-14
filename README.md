@@ -36,6 +36,7 @@ SwiftData（RunningRecord, PomodoroRecord, GameRecord）
 
 AVFoundation（BGM、節拍器、完成音）
 # 專案結構
+```
 FocusFlow/
 ├─ APP/
 │  ├─ Root/               # 入口與通用頁
@@ -76,6 +77,7 @@ FocusFlow/
 │     ├─ TimeCluster.swift
 │     └─ ToolbarEnergy.swift
 └─ README.md
+```
 
 # 快速開始
 使用 Xcode 15+ 開啟 FocusFlow 專案。
