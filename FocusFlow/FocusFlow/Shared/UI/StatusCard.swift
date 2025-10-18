@@ -1,6 +1,9 @@
 import SwiftUI
 
-    // 小膠囊（統一風格）
+// MARK: - 小膠囊元件
+// InfoChip: 統一風格的小膠囊顯示元件，可顯示 icon 與文字
+// StatusSummaryCard: 統一摘要卡片，傳入多行 row 顯示
+
 struct InfoChip: View {
     let icon: String?     // SFSymbol 名稱；用 emoji 就把 icon 傳 nil，文字自己帶 emoji
     let text: String
@@ -52,5 +55,3 @@ struct StatusSummaryCard<Row: View>: View {
         )
     }
 }
-
-

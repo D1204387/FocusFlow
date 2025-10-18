@@ -1,6 +1,12 @@
-    // Shared/Stores/RecordsStore.swift
+// Shared/Stores/RecordsStore.swift
 import Foundation
 import SwiftData
+
+// MARK: - 資料存取工具
+// RecordsStore: 提供依日期區間查詢跑步、番茄、遊戲紀錄的方法
+// runs: 查詢指定區間的 RunningRecord
+// pomodoros: 查詢指定區間的 PomodoroRecord
+// games: 查詢指定區間的 GameRecord
 
 struct RecordsStore {
     let context: ModelContext
@@ -30,5 +36,3 @@ struct RecordsStore {
         return try context.fetch(fd)
     }
 }
-
-

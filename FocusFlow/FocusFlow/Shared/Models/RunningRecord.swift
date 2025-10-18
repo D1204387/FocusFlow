@@ -3,6 +3,10 @@
 import Foundation
 import SwiftData
 
+// MARK: - 資料模型：跑步紀錄
+// RunningRecord 用於儲存每次跑步的日期、持續秒數、步頻（可選）
+// minutes: 由 duration 換算的分鐘數
+
 @Model
 final class RunningRecord {
     var date: Date
@@ -17,4 +21,3 @@ final class RunningRecord {
     
     @Transient var minutes: Int { Int(duration/60) }
 }
-

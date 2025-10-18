@@ -1,10 +1,16 @@
-    // Services/AudioService.swift
+// Services/AudioService.swift
 import Foundation
 import AVFoundation
 import UIKit
 
 
-    /// 控制背景音樂與節拍器
+// MARK: - 音樂與節拍服務
+// AudioService: 控制背景音樂、節拍器、音效的單例服務
+// bgmPlayer: 背景音樂播放器
+// clickPlayer: 節拍音效播放器
+// chimePlayer: 完成提示音播放器
+// startRunSession: 進入跑步模式時啟動音樂/節拍
+// stopRunSession: 結束跑步時關閉音樂/節拍
 final class AudioService {
     static let shared = AudioService()
     private init() {}
@@ -31,7 +37,7 @@ final class AudioService {
             .setActive(false, options: .notifyOthersOnDeactivation)
     }
     
-        // MARK: - Public API (與 RunningView 對齊)
+        // MARK: - Public API（與 RunningView 對齊）
         /// 進入跑步：依設定開啟音訊
     func startRunSession(enableMusic: Bool, enableMetronome: Bool, bpm: Int) {
         configureSession()

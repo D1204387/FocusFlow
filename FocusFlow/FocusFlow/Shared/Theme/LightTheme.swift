@@ -1,5 +1,15 @@
-    // DesignSystem/LightTheme.swift
+// DesignSystem/LightTheme.swift
 import SwiftUI
+
+// MARK: - 亮色主題配色
+// LightTheme: 定義 App 亮色模式下的主要顏色
+// bg: 背景色
+// text: 主要文字色
+// subtext: 次要文字色
+// track: 進度條底色
+// Run/Focus/Game: 各功能主題色
+// tile: 遊戲格子依數字深淺
+// text(_ v): 遊戲格子文字顏色
 
 enum LightTheme {
     static let bg        = Color.white

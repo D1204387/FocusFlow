@@ -1,4 +1,4 @@
-    //
+//
     //  AppSettings.swift
     //  FocusFlow
     //
@@ -108,3 +108,7 @@ final class AppSettings {
     }
 }
 
+// MARK: - App 設定管理
+// AppSettings: 管理所有使用者設定（跑步、專注、顯示等）
+// Key: UserDefaults 儲存鍵
+// 各屬性：對應不同功能的設定值，變動時自動儲存

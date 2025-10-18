@@ -9,7 +9,17 @@ struct FocusCycleView: View {
     @Environment(AppSettings.self) private var settings
     
     
-        // 狀態
+        // MARK: - 狀態
+        // phase: 當前階段（專注、短休、長休）
+        // secondsLeft: 剩餘秒數
+        // targetSeconds: 目標秒數
+        // cycleCount: 已完成的番茄數
+        // isRunning: 計時器是否運行中
+        // showAddTask: 是否顯示新增任務視窗
+        // currentTask: 當前任務
+        // tasks: 任務列表
+        // showFinishSheet: 是否顯示完成提示
+        // finishedTask: 剛完成的任務
     enum Phase { case focus, shortBreak, longBreak }
     @State private var phase: Phase = .focus
     @State private var secondsLeft: Int = 25 * 60
@@ -22,10 +32,14 @@ struct FocusCycleView: View {
     @State private var showFinishSheet = false
     @State private var finishedTask: TaskModel? = nil
     
-        // 計時
+        // MARK: - 計時
+        // tick: 每秒觸發一次的計時器
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
-        // 衍生
+        // MARK: - 衍生
+        // elapsed: 已經過的秒數
+        // progress: 當前進度（0~1）
+        // weekdayShort: 今天是星期幾（短格式）
     private var elapsed: Int { max(0, targetSeconds - secondsLeft) }
     private var progress: Double {
         guard targetSeconds > 0 else { return 0 }
@@ -52,6 +66,7 @@ struct FocusCycleView: View {
     }
     
         // MARK: - 主內容
+        // content: 主畫面內容
     private var content: some View {
         ScrollView {
             VStack(spacing: 18) {
@@ -231,6 +246,14 @@ struct FocusCycleView: View {
     }
     
         // MARK: - 行為
+        // start: 開始計時
+        // pause: 暫停計時
+        // resetAll: 重置所有狀態
+        // skipPhase: 跳過當前階段
+        // countdownIfNeeded: 倒數計時
+        // nextPhase: 進入下一階段
+        // loadPhase: 載入指定階段
+        // currentRestMinutes: 取得當前休息分鐘數
     private func start() {
         isRunning = true
             // 若有任務，啟動時用任務時間
@@ -311,6 +334,7 @@ struct FocusCycleView: View {
     }
     
         // MARK: - 小元件
+        // pill: 標籤樣式元件
     private func pill(_ text: String, sf: String, tint: Color) -> some View {
         HStack(spacing: 6) {
             Image(systemName: sf).imageScale(.small).foregroundStyle(tint)
@@ -324,6 +348,11 @@ struct FocusCycleView: View {
     }
     
         // MARK: - Phase helpers
+        // titleForPhase: 取得階段標題
+        // phaseLabel: 取得階段簡短標籤
+        // minutesForPhase: 取得階段分鐘數
+        // colorForPhase: 取得階段顏色
+        // iconForPhase: 取得階段圖示
     private func titleForPhase(_ p: Phase) -> String {
         switch p {
         case .focus:      return "專注中"
@@ -367,6 +396,12 @@ struct FocusCycleView: View {
     @Query(sort: \PomodoroRecord.date, order: .reverse) private var pomodoros: [PomodoroRecord]
     
         // 本週區間（依系統地區決定週起始）
+        // weekInterval: 本週的日期區間
+        // weekDays: 本週的所有日期
+        // pomodorosThisWeek: 本週的所有番茄紀錄
+        // pomodorosByDay: 每日番茄數
+        // weeklyPomodoroCount: 本週總番茄數
+        // weeklyPercent: 本週完成百分比
     private var weekInterval: DateInterval {
         Calendar.current.dateInterval(of: .weekOfYear, for: Date())!
     }

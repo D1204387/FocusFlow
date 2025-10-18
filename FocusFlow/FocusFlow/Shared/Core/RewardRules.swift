@@ -1,10 +1,15 @@
-    // RewardRules.swift
+// RewardRules.swift
     // 跑步（Running)：完成一次就 +1 能量（不看時長）
     // 專注（Focus/Pomodoro）：完成一顆番茄就 +1 能量（不看分鐘數）
     // 遊戲（Game）：開始一局 -1 能量（不看勝負）；條件：能量 ≥ 1 才能開始；若能量 = 0，顯示鎖定導引（請先完成跑步/專注以獲得能量）； 玩完不加能量
 
 import Foundation
 
+// MARK: - 獎勵規則
+// RewardRules: 定義各功能完成時獲得的能量、遊戲進入條件等邏輯
+// gameEntryCost: 進入遊戲所需能量
+// energy(for:): 根據事件回傳能量獎勵
+// canEnterGame: 判斷能否進入遊戲
 enum RewardRules {
         /// 開始一局遊戲需要消耗的能量
     static let gameEntryCost: Int = 1

@@ -1,7 +1,10 @@
-    // ToolbarEnergy.swift
+// ToolbarEnergy.swift
 import SwiftUI
 
-    /// 右上角能量顯示（共用）+ 能量獲得提示
+// MARK: - 右上角能量顯示元件
+/// ToolbarEnergy: 顯示目前能量與獲得提示的 ToolbarContent
+/// pill: 能量膠囊顯示
+/// showGain: 顯示能量增加動畫
 struct ToolbarEnergy: ToolbarContent {
     @Environment(ModuleCoordinator.self) private var co
     let tint: Color

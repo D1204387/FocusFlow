@@ -2,6 +2,11 @@ import WidgetKit
 import SwiftUI
 import AppIntents
 
+// MARK: - Widget 主要資料結構與 Provider
+// RunSummaryEntry: 跑步摘要資料
+// RunSummaryProvider: 提供 Widget Timeline 資料
+// FocusFlowWidgetEntryView: 根據 Widget 大小顯示不同內容
+
 struct RunSummaryEntry: TimelineEntry {
     let date: Date
     let phase: RunningState.Phase
@@ -27,6 +32,7 @@ struct RunSummaryProvider: TimelineProvider {
     }
 }
 
+// MARK: - Small/Medium Widget 畫面
 struct FocusFlowWidgetEntryView: View {
     let entry: RunSummaryEntry
     @Environment(\.widgetFamily) private var family
