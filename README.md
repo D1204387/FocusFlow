@@ -95,9 +95,9 @@ BGM 將從資源中 隨機 選一首循環播放（可在設定中關閉）。
 
 完成跑步會播放 completion_chime.m4a，結束後自動釋放音訊資源。
 # 圖片展示
-<img width="402" height="874" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-14 at 01 14 05" src="https://github.com/user-attachments/assets/8a0b36e2-4e5d-4ee2-b284-89ace4cd087b" />
-<img width="402" height="874" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-14 at 01 14 09" src="https://github.com/user-attachments/assets/f241c3ec-c14c-4e11-94be-21528381dd92" />
-<img width="402" height="874" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-14 at 01 14 29" src="https://github.com/user-attachments/assets/9a67222b-7878-44e5-a844-d844d27fe250" />
+<img width="268" height="583" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-14 at 01 14 05" src="https://github.com/user-attachments/assets/8a0b36e2-4e5d-4ee2-b284-89ace4cd087b" />
+<img width="268" height="583" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-14 at 01 14 09" src="https://github.com/user-attachments/assets/f241c3ec-c14c-4e11-94be-21528381dd92" />
+<img width="268" height="583" alt="Simulator Screenshot - iPhone 17 Pro - 2025-10-14 at 01 14 29" src="https://github.com/user-attachments/assets/9a67222b-7878-44e5-a844-d844d27fe250" />
 
 
 
