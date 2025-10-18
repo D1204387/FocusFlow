@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import Charts
+import WidgetKit
 
 // 這個檔案負責顯示用戶的跑步、專注、遊戲等記錄，並以圖表與列表方式呈現
 // 包含資料彙總、圖表、摘要列、記錄列表等 SwiftUI 元件
@@ -279,6 +280,23 @@ private struct RecordsList: View {
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .softShadow()
+    }
+}
+
+    // MARK: - Widget 資料同步方法
+
+extension RecordsView {
+    func updateWidgetRunSummary(runs: [RunningRecord]) {
+        let today = Date().startOfDay
+        let todayRuns = runs.filter { $0.date.startOfDay == today }
+        let todayMinutes = todayRuns.reduce(0) { $0 + Int($1.duration / 60) }
+        let todayCount = todayRuns.count
+        let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")
+        userDefaults?.set(todayMinutes, forKey: "todayMinutes")
+        userDefaults?.set(todayCount, forKey: "todayCount")
+        print("寫入 Widget 資料：todayMinutes=\(todayMinutes), todayCount=\(todayCount)")
+        print("AppGroup containerURL:", FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.buildwithharry.focusflow")?.path ?? "nil")
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

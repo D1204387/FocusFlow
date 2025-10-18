@@ -282,14 +282,12 @@ struct RunningView: View {
         isRunning = false
         isPaused = false
         AudioService.shared.playCompletionAndTearDown()
-        
         let sec = elapsed
         guard sec >= 60 else {reset(); return }
-        
-            // 紀錄 + 加能量
+        // 紀錄 + 加能量
         ctx.insert(RunningRecord(duration: sec))
+        RecordsView().updateWidgetRunSummary(runs: runs) // 新增：同步 Widget 資料
         co.apply(.runCompleted(minutes: Int(sec / 60)), modelContext: ctx)
-        
         showFinishSheet = true // 🎉 顯示完成視窗
     }
     

@@ -12,11 +12,13 @@ struct RunSummaryEntry: TimelineEntry {
     let phase: RunningState.Phase
     let weeklyMinutes: Int
     let streakDays: Int
+    let todayMinutes: Int
+    let todayCount: Int
 }
 
 struct RunSummaryProvider: TimelineProvider {
     func placeholder(in: Context) -> RunSummaryEntry {
-        .init(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0)
+        .init(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0, todayMinutes: 0, todayCount: 0)
     }
     func getSnapshot(in: Context, completion: @escaping (RunSummaryEntry)->Void) {
         completion(loadEntry())
@@ -28,7 +30,12 @@ struct RunSummaryProvider: TimelineProvider {
     private func loadEntry() -> RunSummaryEntry {
         let phase = RunStore.load().phase
         let (weekly, streak) = WidgetDataManager.shared.computeRunSummary()
-        return .init(date: .now, phase: phase, weeklyMinutes: weekly, streakDays: streak)
+        let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")
+        let todayMinutes = userDefaults?.integer(forKey: "todayMinutes") ?? 0
+        let todayCount = userDefaults?.integer(forKey: "todayCount") ?? 0
+        print("Widget 讀取：todayMinutes=\(todayMinutes), todayCount=\(todayCount)")
+        print("Widget AppGroup containerURL:", FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.buildwithharry.focusflow")?.path ?? "nil")
+        return .init(date: .now, phase: phase, weeklyMinutes: weekly, streakDays: streak, todayMinutes: todayMinutes, todayCount: todayCount)
     }
 }
 
@@ -63,14 +70,25 @@ struct FocusFlowWidgetEntryView: View {
             
             HStack {
                 Image(systemName: "clock.badge.checkmark")
-                Text("\(entry.weeklyMinutes) 分").monospacedDigit()
+                Text("本週 \(entry.weeklyMinutes) 分").monospacedDigit()
                 Spacer()
             }
             .font(.footnote)
-            
             HStack {
                 Image(systemName: "flame.fill")
-                Text("\(entry.streakDays) 天").monospacedDigit()
+                Text("連續 \(entry.streakDays) 天").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            HStack {
+                Image(systemName: "clock")
+                Text("今日累積 \(entry.todayMinutes) 分").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            HStack {
+                Image(systemName: "checkmark.circle")
+                Text("完成 \(entry.todayCount) 次").monospacedDigit()
                 Spacer()
             }
             .font(.footnote)
@@ -104,10 +122,20 @@ struct FocusFlowWidgetEntryView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
+                HStack {
+                    Image(systemName: "clock")
+                    Text("今日累積 \(entry.todayMinutes) 分").monospacedDigit()
+                    Spacer()
+                }
+                .font(.footnote)
+                HStack {
+                    Image(systemName: "checkmark.circle")
+                    Text("完成 \(entry.todayCount) 次").monospacedDigit()
+                    Spacer()
+                }
+                .font(.footnote)
             }
-            
             Spacer()
-            
             metricCard(title: "本週", value: "\(entry.weeklyMinutes)", unit: "分", icon: "clock.badge.checkmark")
             metricCard(title: "連續", value: "\(entry.streakDays)", unit: "天", icon: "flame.fill")
         }
@@ -161,13 +189,13 @@ struct FocusFlowWidget: Widget {
 #Preview(as: .systemSmall) {
     FocusFlowWidget()
 } timeline: {
-    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 42, streakDays: 3)
-    RunSummaryEntry(date: .now, phase: .idle,    weeklyMinutes: 0,  streakDays: 0)
+    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 42, streakDays: 3, todayMinutes: 10, todayCount: 1)
+    RunSummaryEntry(date: .now, phase: .idle,    weeklyMinutes: 0,  streakDays: 0, todayMinutes: 0, todayCount: 0)
 }
 
 #Preview(as: .systemMedium) {
     FocusFlowWidget()
 } timeline: {
-    RunSummaryEntry(date: .now, phase: .paused,  weeklyMinutes: 18, streakDays: 5)
-    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 60, streakDays: 10)
+    RunSummaryEntry(date: .now, phase: .paused,  weeklyMinutes: 18, streakDays: 5, todayMinutes: 5, todayCount: 1)
+    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 60, streakDays: 10, todayMinutes: 30, todayCount: 2)
 }

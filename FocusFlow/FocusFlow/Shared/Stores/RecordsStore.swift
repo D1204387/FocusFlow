@@ -36,3 +36,20 @@ struct RecordsStore {
         return try context.fetch(fd)
     }
 }
+
+extension RecordsStore {
+    func syncTodayStatsToAppGroup() {
+        let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")
+        let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        let range = DateInterval(start: today, end: tomorrow)
+        let todayRunMinutes = (try? runs(in: range).map { $0.minutes }.reduce(0, +)) ?? 0
+        let todayRunCount = (try? runs(in: range).count) ?? 0
+        let todayFocusMinutes = (try? pomodoros(in: range).map { $0.focus }.reduce(0, +)) ?? 0
+        let todayFocusCount = (try? pomodoros(in: range).count) ?? 0
+        // 合併所有紀錄
+        userDefaults?.set(todayRunMinutes + todayFocusMinutes, forKey: "todayMinutes")
+        userDefaults?.set(todayRunCount + todayFocusCount, forKey: "todayCount")
+        userDefaults?.synchronize()
+    }
+}

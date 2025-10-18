@@ -178,26 +178,20 @@ struct SettingsView: View {
     }
 
 #Preview("設定（預覽）") {
-        // 用同一份設定物件做預覽
     let s = AppSettings.shared
-        // 示範值（可改）
     s.bgmOn = true
     s.metronomeOn = true
     s.metronomeBPM = 180
     s.runTargetMinutes = 20
-    
     s.focusMinutes = 25
     s.shortBreakMinutes = 5
     s.longBreakMinutes = 15
     s.roundsBeforeLongBreak = 4
     s.autoContinue = true
-    
     return NavigationStack {
         SettingsView()
     }
-    .environment(s)                    // 提供 AppSettings
-    .environment(ModuleCoordinator())  // 提供能量列需要的 coordinator
+    .environment(s)
+    .environment(ModuleCoordinator())
     .preferredColorScheme(.light)
 }
-
-
