@@ -75,7 +75,14 @@ struct AddTaskView: View {
                         .padding(.horizontal)
                     
                     Spacer()
-                    
+                    // 新增：本次設定區塊，顯示目前選擇的時間
+                    Text("本次設定：\(minutes) 分 \(seconds) 秒")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 8)
+                    Text("預設：\(AppSettings.shared.focusMinutes) 分鐘")
+                        .font(.caption)
+                        .foregroundColor(.gray)
                     Button("完成") {
                         let model = TaskModel(name: taskName, minutes: minutes, seconds: seconds)
                         onComplete(model)

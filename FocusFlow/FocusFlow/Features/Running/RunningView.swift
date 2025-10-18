@@ -1,4 +1,4 @@
-    // Views/RunningView.swift
+// Views/RunningView.swift
 import SwiftUI
 import SwiftData
 import Combine
@@ -50,6 +50,7 @@ struct RunningView: View {
                         tickCount: 60,
                         tickSize: .init(width: 8, height: 34),
                         innerPadding: 18,
+                        startAngle: .degrees(0), // 讓進度環從 3 點鐘方向開始
                         active: Theme.Run.solid,
                         inactive: Color(.systemGray4)
                     ) {
@@ -403,4 +404,3 @@ private struct DayPoint: Identifiable {
         .modelContainer(container)
         .preferredColorScheme(.light)
 }
-

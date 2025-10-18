@@ -45,6 +45,8 @@ struct FocusCycleView: View {
             CompletionSheet(task: finishedTask, tint: Theme.Focus.solid) {
                 showFinishSheet = false
                 finishedTask = nil
+                // 關閉完成提示後才進入下一階段
+                nextPhase(completedFocus: true)
             }
         }
     }
@@ -264,11 +266,12 @@ struct FocusCycleView: View {
                     focus: settings.focusMinutes,
                     rest: currentRestMinutes()
                 ), modelContext: ctx)
-                    // 標記 currentTask 為完成
+                // 標記 currentTask 為完成
                 if let currentId = currentTask?.id, let idx = tasks.firstIndex(where: { $0.id == currentId }) {
                     tasks[idx].isCompleted = true
                     finishedTask = tasks[idx]
                     showFinishSheet = true // 顯示完成提示
+                    return // 完成任務時暫停，不自動進入下一階段
                 }
             }
             nextPhase(completedFocus: completedFocus)
@@ -285,7 +288,8 @@ struct FocusCycleView: View {
         } else {
             loadPhase(.focus)
         }
-        if settings.autoContinue { isRunning = true }
+        // 進入新階段時一律暫停，需手動按開始
+        isRunning = false
     }
     
     private func loadPhase(_ p: Phase) {

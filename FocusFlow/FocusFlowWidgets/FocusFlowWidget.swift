@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 struct RunSummaryEntry: TimelineEntry {
     let date: Date
@@ -17,8 +18,7 @@ struct RunSummaryProvider: TimelineProvider {
     }
     func getTimeline(in: Context, completion: @escaping (Timeline<RunSummaryEntry>)->Void) {
         let e = loadEntry()
-        let next = Date().addingTimeInterval(e.phase == .running ? 30 : 1800)
-        completion(Timeline(entries: [e], policy: .after(next)))
+        completion(Timeline(entries: [e], policy: .atEnd))
     }
     private func loadEntry() -> RunSummaryEntry {
         let phase = RunStore.load().phase
@@ -68,6 +68,15 @@ struct FocusFlowWidgetEntryView: View {
                 Spacer()
             }
             .font(.footnote)
+            
+            // 將原本的 AppIntentButton 移除，改為普通 Button 或直接移除
+            Button(action: {
+                // 這裡不能直接觸發 AppIntent，只能打開 App 或顯示提示
+            }) {
+                Label("手動記錄跑步", systemImage: "plus")
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: CGFloat.infinity) // 明確指定型別
             
             Spacer(minLength: 0)
         }
@@ -156,4 +165,3 @@ struct FocusFlowWidget: Widget {
     RunSummaryEntry(date: .now, phase: .paused,  weeklyMinutes: 18, streakDays: 5)
     RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 60, streakDays: 10)
 }
-
