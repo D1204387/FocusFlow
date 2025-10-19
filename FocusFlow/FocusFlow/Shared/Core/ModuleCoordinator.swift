@@ -1,7 +1,16 @@
-    // ModuleCoordinator.swift
+// ModuleCoordinator.swift
 import Foundation
 import Observation
 import SwiftData
+
+// MARK: - 模組協調器
+// ModuleCoordinator: 管理全域能量與事件分派的 Observable 物件
+// energy: 當前能量
+// FlowEvent: 事件型別（跑步完成、番茄完成、遊戲結束）
+// apply: 根據事件增加能量並儲存
+// canEnterGame: 判斷能否進入遊戲
+// spendForGameEntry: 扣除遊戲入場能量
+// spendEnergy/refundEnergy: 能量增減
 
 @Observable
 final class ModuleCoordinator {
@@ -37,4 +46,3 @@ final class ModuleCoordinator {
         energy += n
     }
 }
-

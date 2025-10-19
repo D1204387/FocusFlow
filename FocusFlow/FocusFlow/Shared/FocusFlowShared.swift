@@ -3,6 +3,7 @@ import SwiftData
 import WidgetKit
 
     // MARK: - App Group / 共用工具
+// FFAppGroup 用於取得 App Group 的 UserDefaults 與 container 路徑，方便主程式與 Widget 共享資料
 public enum FFAppGroup {
     public static let id = "group.com.buildwithharry.focusflow"
     
@@ -15,6 +16,8 @@ public enum FFAppGroup {
 }
 
     // MARK: - 番茄鐘狀態（即時）
+// FFPhase: 番茄鐘的階段（專注/休息）
+// FocusFlowState: 番茄鐘的狀態資料結構
 public enum FFPhase: String, Codable { case focus, `break` }
 
 public struct FocusFlowState: Codable {
@@ -40,6 +43,7 @@ public enum FocusFlowStore {
 }
 
     // MARK: - 跑步狀態（即時）
+// RunningState: 跑步功能的狀態資料結構
 public struct RunningState: Codable {
     public enum Phase: String, Codable { case idle, running, paused }
     public var phase: Phase = .idle
@@ -66,6 +70,7 @@ public enum RunStore {
 }
 
     // MARK: - SwiftData 共用容器 + 小工具統計（App/Widget 共用）
+// WidgetDataManager: 負責管理 SwiftData 的 ModelContainer，並提供統計資料的計算方法
 public struct WidgetDataManager {
     public static let shared = WidgetDataManager()
     

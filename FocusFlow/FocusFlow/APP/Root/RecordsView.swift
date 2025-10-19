@@ -1,10 +1,20 @@
 import SwiftUI
 import SwiftData
 import Charts
+import WidgetKit
+
+// 這個檔案負責顯示用戶的跑步、專注、遊戲等記錄，並以圖表與列表方式呈現
+// 包含資料彙總、圖表、摘要列、記錄列表等 SwiftUI 元件
+// MARK: - 檔案層級輔助資料結構
+// SeriesPoint: 折線圖資料點
+// DayBin: 每日彙總資料（跑步、專注、遊戲）
+// aggregate: 彙總指定區間的所有資料
+// Date/Calendar 擴充：取得當天起訖
 
     // MARK: - Helpers (file-scope)
 
 struct SeriesPoint: Identifiable {
+    // 折線圖的資料點
     let id = UUID()
     let date: Date
     let value: Double
@@ -12,16 +22,18 @@ struct SeriesPoint: Identifiable {
 }
 
 struct DayBin: Identifiable {
+    // 每日彙總資料
     let id = UUID()
     let date: Date
-    var runMinutes: Double
-    var focusMinutes: Double
-    var gamePlays: Int
+    var runMinutes: Double // 跑步分鐘數
+    var focusMinutes: Double // 專注分鐘數
+    var gamePlays: Int // 遊戲局數
     
     static func aggregate(range: DateInterval,
                           runs: [RunningRecord],
                           pomos: [PomodoroRecord],
                           games: [GameRecord]) -> [DayBin] {
+        // 彙總指定區間的所有資料，依天分組
         let days = Calendar.current.dates(from: range.start.startOfDay, to: range.end.startOfDay)
         var table: [Date: DayBin] = Dictionary(uniqueKeysWithValues: days.map {
             ($0, DayBin(date: $0, runMinutes: 0, focusMinutes: 0, gamePlays: 0))
@@ -43,11 +55,13 @@ struct DayBin: Identifiable {
 }
 
 extension Date {
+    // 取得當天的起始與結束時間
     var startOfDay: Date { Calendar.current.startOfDay(for: self) }
     var endOfDay:   Date { Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)! }
 }
 
 extension Calendar {
+    // 取得從 start 到 end 的所有日期陣列
     func dates(from start: Date, to end: Date) -> [Date] {
         var out: [Date] = []; var cur = start
         while cur <= end { out.append(cur); cur = date(byAdding: .day, value: 1, to: cur)! }
@@ -58,10 +72,12 @@ extension Calendar {
     // MARK: - Main View
 
 struct RecordsView: View {
+    // 類別選擇（全部、跑步、專注、遊戲）
     enum Category: String, CaseIterable, Identifiable {
         case all = "全部", running = "跑步", focus = "專注", game = "遊戲"
         var id: Self { self }
     }
+    // 區間選擇（近 7 天、近 30 天）
     enum RangePreset: String, CaseIterable, Identifiable {
         case week = "近 7 天", month = "近 30 天"
         var id: Self { self }
@@ -72,18 +88,18 @@ struct RecordsView: View {
         }
     }
     
-    @Environment(\.modelContext) private var ctx
-    @Environment(ModuleCoordinator.self) private var co
+    @Environment(\.modelContext) private var ctx // SwiftData context
+    @Environment(ModuleCoordinator.self) private var co // 能量協調器
     
-    @State private var category: Category = .all
-    @State private var preset: RangePreset = .week
-    @State private var bins: [DayBin] = []
+    @State private var category: Category = .all // 當前選擇的類別
+    @State private var preset: RangePreset = .week // 當前選擇的區間
+    @State private var bins: [DayBin] = [] // 彙總後的每日資料
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    HStack { pill("能量 \(co.energy)"); Spacer() }
+                    HStack { pill("能量 \(co.energy)"); Spacer() } // 顯示能量
                     
                     Picker("", selection: $category) {
                         ForEach(Category.allCases) { Text($0.rawValue).tag($0) }
@@ -93,7 +109,7 @@ struct RecordsView: View {
                         ForEach(RangePreset.allCases) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented)
                     
-                    SummaryRow(bins: bins)
+                    SummaryRow(bins: bins) // 摘要列
                     
                     ChartView(bins: bins, category: category)
                         .frame(height: 260)
@@ -102,7 +118,7 @@ struct RecordsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .softShadow()
                     
-                    RecordsList(bins: bins, category: category)
+                    RecordsList(bins: bins, category: category) // 記錄列表
                 }
                 .padding()
             }
@@ -110,13 +126,14 @@ struct RecordsView: View {
             .navigationTitle("記錄")
             .toolbarEnergy(title: "記錄", tint: .gray)
         }
-        .task(id: category) { await reload() }
-        .task(id: preset)   { await reload() }
-        .onAppear           { Task { await reload() } }
+        .task(id: category) { await reload() } // 切換類別時重新載入
+        .task(id: preset)   { await reload() } // 切換區間時重新載入
+        .onAppear           { Task { await reload() } } // 首次顯示時載入
     }
     
         // MARK: - Load
     private func reload() async {
+        // 讀取資料並彙總
         let store = RecordsStore(context: ctx)   // 你專案裡的簡易查詢器
         let range = preset.interval
         let runs  = (try? store.runs(in: range))      ?? []
@@ -127,6 +144,7 @@ struct RecordsView: View {
     
         // MARK: - UI helpers
     private func pill(_ text: String) -> some View {
+        // 膠囊樣式的文字顯示
         Text(text)
             .font(.subheadline)
             .foregroundStyle(Theme.text)
@@ -140,10 +158,12 @@ struct RecordsView: View {
     // MARK: - Chart
 
 private struct ChartView: View {
+    // 圖表顯示
     let bins: [DayBin]
     let category: RecordsView.Category
     
     private var seriesData: [SeriesPoint] {
+        // 根據類別產生對應的資料點
         switch category {
         case .running: return bins.map { .init(date: $0.date, value: $0.runMinutes,  series: "跑步") }
         case .focus:   return bins.map { .init(date: $0.date, value: $0.focusMinutes, series: "專注") }
@@ -184,6 +204,7 @@ private struct ChartView: View {
     }
     
     private func color(for s: String) -> Color {
+        // 根據系列名稱給顏色
         switch s {
         case "跑步": return Theme.Run.solid
         case "專注": return Theme.Focus.solid
@@ -195,10 +216,11 @@ private struct ChartView: View {
     // MARK: - Summary
 
 private struct SummaryRow: View {
+    // 摘要列顯示
     let bins: [DayBin]
-    private var totalRun: Int   { Int(bins.reduce(0) { $0 + $1.runMinutes }) }
-    private var totalFocus: Int { Int(bins.reduce(0) { $0 + $1.focusMinutes }) }
-    private var totalGame: Int  { bins.reduce(0) { $0 + $1.gamePlays } }
+    private var totalRun: Int   { Int(bins.reduce(0) { $0 + $1.runMinutes }) } // 跑步總分鐘
+    private var totalFocus: Int { Int(bins.reduce(0) { $0 + $1.focusMinutes }) } // 專注總分鐘
+    private var totalGame: Int  { bins.reduce(0) { $0 + $1.gamePlays } } // 遊戲總局數
     
     var body: some View {
         HStack(spacing: 12) {
@@ -209,6 +231,7 @@ private struct SummaryRow: View {
     }
     
     private func stat(_ title: String, value: Int, color: Color) -> some View {
+        // 單一統計項目
         VStack(spacing: 4) {
             Text(title).font(.caption).foregroundStyle(Theme.subtext)
             Text("\(value)").font(.title2.bold()).foregroundStyle(color).monospacedDigit()
@@ -223,6 +246,7 @@ private struct SummaryRow: View {
     // MARK: - List
 
 private struct RecordsList: View {
+    // 記錄列表顯示
     let bins: [DayBin]
     let category: RecordsView.Category
     
@@ -256,6 +280,23 @@ private struct RecordsList: View {
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .softShadow()
+    }
+}
+
+    // MARK: - Widget 資料同步方法
+
+extension RecordsView {
+    func updateWidgetRunSummary(runs: [RunningRecord]) {
+        let today = Date().startOfDay
+        let todayRuns = runs.filter { $0.date.startOfDay == today }
+        let todayMinutes = todayRuns.reduce(0) { $0 + Int($1.duration / 60) }
+        let todayCount = todayRuns.count
+        let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")
+        userDefaults?.set(todayMinutes, forKey: "todayMinutes")
+        userDefaults?.set(todayCount, forKey: "todayCount")
+        print("寫入 Widget 資料：todayMinutes=\(todayMinutes), todayCount=\(todayCount)")
+        print("AppGroup containerURL:", FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.buildwithharry.focusflow")?.path ?? "nil")
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
@@ -306,4 +347,3 @@ private struct RecordsList: View {
     .modelContainer(container)
     .preferredColorScheme(.light)
 }
-

@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 
     // MARK: - Entry
 struct PomodoroEntry: TimelineEntry {
@@ -75,6 +76,16 @@ struct PomodoroView: View {
                 Text("Pomodoro")
                     .font(.subheadline).fontWeight(.semibold)
                     .lineLimit(1)
+                Spacer()
+                // 手動刷新按鈕
+                if #available(iOS 17.0, *) {
+                    Button(intent: RefreshWidgetIntent()) {
+                        Image(systemName: "arrow.clockwise.circle")
+                            .font(.title2)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("手動刷新")
+                }
             }
             .foregroundStyle(.blue)
             
@@ -112,6 +123,16 @@ struct PomodoroView: View {
                     Text(statusText)
                         .font(.headline).fontWeight(.semibold)
                         .foregroundStyle(phaseColor)
+                    Spacer()
+                    // 手動刷新按鈕
+                    if #available(iOS 17.0, *) {
+                        Button(intent: RefreshWidgetIntent()) {
+                            Image(systemName: "arrow.clockwise.circle")
+                                .font(.title2)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("手動刷新")
+                    }
                 }
                 Text(entry.isRunning ? timeStr(entry.remaining) : "未在倒數")
                     .font(.title2).monospacedDigit()
@@ -157,16 +178,17 @@ struct PomodoroView: View {
     }
 }
 
-    // MARK: - Widget
+    // MARK: - Widget 主體宣告
 struct PomodoroWidget: Widget {
-    private let kind = "FocusFlowPomodoro"
+    let kind: String = "PomodoroWidget"
+
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: PomodoroProvider()) { entry in
             PomodoroView(entry: entry)
         }
-        .configurationDisplayName("FocusFlow 番茄鐘")
-        .description("顯示專注/休息倒數與今天累積。")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .configurationDisplayName("專注番茄")
+        .description("追蹤你的番茄鐘專注狀態。")
+        .supportedFamilies([.systemSmall, .systemMedium]) // 支援主畫面 Widget
     }
 }
 

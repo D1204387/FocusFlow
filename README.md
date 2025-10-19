@@ -38,45 +38,68 @@ AVFoundation（BGM、節拍器、完成音）
 # 專案結構
 ```
 FocusFlow/
-├─ APP/
-│  ├─ Root/               # 入口與通用頁
-│  │  ├─ FocusFlowApp.swift
-│  │  ├─ FocusFlowRootView.swift
-│  │  ├─ RecordsView.swift
-│  │  └─ SettingsView.swift
-│  └─ Features/
-│     ├─ Running/         # 跑步
-│     │  └─ RunningView.swift
-│     ├─ Focus/           # 專注番茄
-│     │  └─ FocusCycleView.swift
-│     └─ Game/            # 2048
-│        ├─ GameView.swift
-│        ├─ GameModel.swift
-│        └─ LeaderboardManager.swift
-├─ Resources/
-│  ├─ Audio/              # BGM / 節拍器 / 完成音
-│  │  ├─ light_music.mp3, nature_ambient.mp3, relaxing_piano.mp3
-│  │  ├─ metronome_click.wav
-│  │  └─ completion_chime.m4a
-│  └─ Assets.xcassets
-├─ Shared/
-│  ├─ Core/               # 系統層
-│  │  ├─ AppSettings.swift
-│  │  ├─ AudioService.swift
-│  │  ├─ ModuleCoordinator.swift
-│  │  └─ RewardRules.swift
-│  ├─ Models/             # SwiftData 模型
-│  │  ├─ RunningRecord.swift
-│  │  ├─ PomodoroRecord.swift
-│  │  └─ GameRecord.swift
-│  ├─ Theme/              # 主題與樣式
-│  │  ├─ LightTheme.swift
-│  │  └─ ButtonStyles.swift
-│  └─ UI/                 # 可重用元件
-│     ├─ SegmentedGaugeRing.swift
-│     ├─ TimeCluster.swift
-│     └─ ToolbarEnergy.swift
-└─ README.md
+├─ APP/                            # 主應用層（主要頁面與功能模組）
+│  ├─ Root/                        # 應用入口與共用頁面
+│  │  ├─ FocusFlowApp.swift        # App 主入口（@main）
+│  │  ├─ FocusFlowRootView.swift   # 根視圖，負責導航與容器管理
+│  │  ├─ RecordsView.swift         # 專注與跑步紀錄列表
+│  │  └─ SettingsView.swift        # 設定頁
+│  └─ Features/                    # 功能模組（Feature Modules）
+│     ├─ Running/                  # 慢跑模組
+│     │  └─ RunningView.swift      # 跑步紀錄畫面與邏輯
+│     ├─ Focus/                    # 番茄專注模組
+│     │  ├─ FocusCycleView.swift   # 專注循環計時主畫面
+│     │  ├─ AddTaskView.swift      # 新增任務頁面
+│     │  └─ TaskModel.swift        # 任務資料模型
+│     └─ Game/                     # 2048 遊戲模組
+│        ├─ GameView.swift         # 遊戲主畫面
+│        ├─ GameModel.swift        # 遊戲邏輯
+│        └─ LeaderboardManager.swift # 排行榜管理
+│
+├─ Resources/                      # 資源檔案（音效與素材）
+│  ├─ Audio/                       # 音效資源
+│  │  ├─ light_music.mp3           # 輕音樂背景
+│  │  ├─ nature_ambient.mp3        # 自然環境聲
+│  │  ├─ relaxing_piano.mp3        # 鋼琴放鬆音樂
+│  │  ├─ metronome_click.wav       # 節拍器點音
+│  │  └─ completion_chime.m4a      # 完成提示音
+│  └─ Assets.xcassets              # App 圖示與主題顏色資產
+│
+├─ Shared/                         # 共用邏輯層（可跨模組共用）
+│  ├─ Core/                        # 核心邏輯
+│  │  ├─ AppSettings.swift         # 全域設定與偏好管理
+│  │  ├─ AudioService.swift        # 音效播放控制
+│  │  ├─ ModuleCoordinator.swift   # 模組切換協調器
+│  │  └─ RewardRules.swift         # 獎勵機制與分數規則
+│  ├─ Models/                      # SwiftData 資料模型
+│  │  ├─ RunningRecord.swift       # 跑步紀錄資料模型
+│  │  ├─ PomodoroRecord.swift      # 番茄紀錄資料模型
+│  │  └─ GameRecord.swift          # 遊戲紀錄資料模型
+│  ├─ Stores/                      # 資料存取層
+│  │  └─ RecordsStore.swift        # 統一管理紀錄資料的存取
+│  ├─ Theme/                       # 主題與樣式
+│  │  ├─ LightTheme.swift          # App 色彩主題設定
+│  │  └─ ButtonStyles.swift        # 按鈕樣式統一定義
+│  └─ UI/                          # 可重用 UI 元件
+│     ├─ SegmentedGaugeRing.swift  # 圓環進度元件
+│     ├─ TimeCluster.swift         # 時間區塊顯示
+│     ├─ ToolbarEnergy.swift       # 工具列能量指示
+│     └─ StatusCard.swift          # 狀態資訊卡片
+│
+├─ Widgets/                        # 小工具 (Widget Extension)
+│  ├─ FocusFlowWidget.swift        # 主 Widget 入口
+│  ├─ PomodoroWidget.swift         # 番茄時鐘 Widget
+│  ├─ RefreshWidgetIntent.swift    # 資料手動刷新 Intent
+│  ├─ ManualRecordIntent.swift     # 手動新增紀錄 Intent
+│  ├─ FocusFlowWidgetsBundle.swift # Widget 組合管理
+│  └─ Info.plist                   # Widget 組態檔
+│
+├─ Config/                         # 設定檔與權限
+│  ├─ FocusFlow-iOS-Info.plist     # 主應用的 Info 設定
+│  └─ FocusFlowWidgetsExtension.entitlements # Widget 權限設定
+│
+└─ README.md                       # 專案說明文件
+
 ```
 
 # 快速開始

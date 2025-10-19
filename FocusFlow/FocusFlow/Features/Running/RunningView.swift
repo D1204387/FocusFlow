@@ -1,4 +1,4 @@
-    // Views/RunningView.swift
+// Views/RunningView.swift
 import SwiftUI
 import SwiftData
 import Combine
@@ -50,6 +50,7 @@ struct RunningView: View {
                         tickCount: 60,
                         tickSize: .init(width: 8, height: 34),
                         innerPadding: 18,
+                        startAngle: .degrees(0), // 讓進度環從 3 點鐘方向開始
                         active: Theme.Run.solid,
                         inactive: Color(.systemGray4)
                     ) {
@@ -281,14 +282,12 @@ struct RunningView: View {
         isRunning = false
         isPaused = false
         AudioService.shared.playCompletionAndTearDown()
-        
         let sec = elapsed
         guard sec >= 60 else {reset(); return }
-        
-            // 紀錄 + 加能量
+        // 紀錄 + 加能量
         ctx.insert(RunningRecord(duration: sec))
+        RecordsView().updateWidgetRunSummary(runs: runs) // 新增：同步 Widget 資料
         co.apply(.runCompleted(minutes: Int(sec / 60)), modelContext: ctx)
-        
         showFinishSheet = true // 🎉 顯示完成視窗
     }
     
@@ -403,4 +402,3 @@ private struct DayPoint: Identifiable {
         .modelContainer(container)
         .preferredColorScheme(.light)
 }
-

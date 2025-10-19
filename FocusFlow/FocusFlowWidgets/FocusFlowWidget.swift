@@ -1,32 +1,45 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
+
+// MARK: - Widget 主要資料結構與 Provider
+// RunSummaryEntry: 跑步摘要資料
+// RunSummaryProvider: 提供 Widget Timeline 資料
+// FocusFlowWidgetEntryView: 根據 Widget 大小顯示不同內容
 
 struct RunSummaryEntry: TimelineEntry {
     let date: Date
     let phase: RunningState.Phase
     let weeklyMinutes: Int
     let streakDays: Int
+    let todayMinutes: Int
+    let todayCount: Int
 }
 
 struct RunSummaryProvider: TimelineProvider {
     func placeholder(in: Context) -> RunSummaryEntry {
-        .init(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0)
+        .init(date: .now, phase: .idle, weeklyMinutes: 0, streakDays: 0, todayMinutes: 0, todayCount: 0)
     }
     func getSnapshot(in: Context, completion: @escaping (RunSummaryEntry)->Void) {
         completion(loadEntry())
     }
     func getTimeline(in: Context, completion: @escaping (Timeline<RunSummaryEntry>)->Void) {
         let e = loadEntry()
-        let next = Date().addingTimeInterval(e.phase == .running ? 30 : 1800)
-        completion(Timeline(entries: [e], policy: .after(next)))
+        completion(Timeline(entries: [e], policy: .atEnd))
     }
     private func loadEntry() -> RunSummaryEntry {
         let phase = RunStore.load().phase
         let (weekly, streak) = WidgetDataManager.shared.computeRunSummary()
-        return .init(date: .now, phase: phase, weeklyMinutes: weekly, streakDays: streak)
+        let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")
+        let todayMinutes = userDefaults?.integer(forKey: "todayMinutes") ?? 0
+        let todayCount = userDefaults?.integer(forKey: "todayCount") ?? 0
+        print("Widget 讀取：todayMinutes=\(todayMinutes), todayCount=\(todayCount)")
+        print("Widget AppGroup containerURL:", FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.buildwithharry.focusflow")?.path ?? "nil")
+        return .init(date: .now, phase: phase, weeklyMinutes: weekly, streakDays: streak, todayMinutes: todayMinutes, todayCount: todayCount)
     }
 }
 
+// MARK: - Small/Medium Widget 畫面
 struct FocusFlowWidgetEntryView: View {
     let entry: RunSummaryEntry
     @Environment(\.widgetFamily) private var family
@@ -57,17 +70,37 @@ struct FocusFlowWidgetEntryView: View {
             
             HStack {
                 Image(systemName: "clock.badge.checkmark")
-                Text("\(entry.weeklyMinutes) 分").monospacedDigit()
+                Text("本週 \(entry.weeklyMinutes) 分").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            HStack {
+                Image(systemName: "flame.fill")
+                Text("連續 \(entry.streakDays) 天").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            HStack {
+                Image(systemName: "clock")
+                Text("今日累積 \(entry.todayMinutes) 分").monospacedDigit()
+                Spacer()
+            }
+            .font(.footnote)
+            HStack {
+                Image(systemName: "checkmark.circle")
+                Text("完成 \(entry.todayCount) 次").monospacedDigit()
                 Spacer()
             }
             .font(.footnote)
             
-            HStack {
-                Image(systemName: "flame.fill")
-                Text("\(entry.streakDays) 天").monospacedDigit()
-                Spacer()
+            // 將原本的 AppIntentButton 移除，改為普通 Button 或直接移除
+            Button(action: {
+                // 這裡不能直接觸發 AppIntent，只能打開 App 或顯示提示
+            }) {
+                Label("手動記錄跑步", systemImage: "plus")
             }
-            .font(.footnote)
+            .buttonStyle(.plain)
+            .frame(maxWidth: CGFloat.infinity) // 明確指定型別
             
             Spacer(minLength: 0)
         }
@@ -89,10 +122,20 @@ struct FocusFlowWidgetEntryView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
+                HStack {
+                    Image(systemName: "clock")
+                    Text("今日累積 \(entry.todayMinutes) 分").monospacedDigit()
+                    Spacer()
+                }
+                .font(.footnote)
+                HStack {
+                    Image(systemName: "checkmark.circle")
+                    Text("完成 \(entry.todayCount) 次").monospacedDigit()
+                    Spacer()
+                }
+                .font(.footnote)
             }
-            
             Spacer()
-            
             metricCard(title: "本週", value: "\(entry.weeklyMinutes)", unit: "分", icon: "clock.badge.checkmark")
             metricCard(title: "連續", value: "\(entry.streakDays)", unit: "天", icon: "flame.fill")
         }
@@ -146,14 +189,13 @@ struct FocusFlowWidget: Widget {
 #Preview(as: .systemSmall) {
     FocusFlowWidget()
 } timeline: {
-    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 42, streakDays: 3)
-    RunSummaryEntry(date: .now, phase: .idle,    weeklyMinutes: 0,  streakDays: 0)
+    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 42, streakDays: 3, todayMinutes: 10, todayCount: 1)
+    RunSummaryEntry(date: .now, phase: .idle,    weeklyMinutes: 0,  streakDays: 0, todayMinutes: 0, todayCount: 0)
 }
 
 #Preview(as: .systemMedium) {
     FocusFlowWidget()
 } timeline: {
-    RunSummaryEntry(date: .now, phase: .paused,  weeklyMinutes: 18, streakDays: 5)
-    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 60, streakDays: 10)
+    RunSummaryEntry(date: .now, phase: .paused,  weeklyMinutes: 18, streakDays: 5, todayMinutes: 5, todayCount: 1)
+    RunSummaryEntry(date: .now, phase: .running, weeklyMinutes: 60, streakDays: 10, todayMinutes: 30, todayCount: 2)
 }
-

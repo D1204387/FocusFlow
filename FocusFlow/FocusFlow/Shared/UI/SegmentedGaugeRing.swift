@@ -7,7 +7,20 @@
 import SwiftUI
 import UIKit 
 
-    // MARK: - 分段式進度環
+    // MARK: - 分段式進度環元件
+// SegmentedGaugeRing: 顯示多段刻度的進度環，可自訂中心內容
+// progress: 進度（0~1）
+// size: 外徑
+// tickCount: 刻度數
+// tickSize: 刻度尺寸
+// innerPadding: 內間距
+// startAngle: 起始角度
+// gapDegrees: 刻度間隔角度
+// majorEvery: 主刻度間隔
+// majorScale: 主刻度放大倍率
+// activeStyle/inactiveStyle: 進度顏色
+// animationEnabled/hapticEnabled: 是否啟用動畫/震動
+
 public struct SegmentedGaugeRing<Center: View>: View {
         // MARK: - Properties
     private let progress: Double
@@ -212,4 +225,3 @@ public struct SegmentedGaugeRing<Center: View>: View {
         .snappy(duration: 0.30)
     }
 }
-

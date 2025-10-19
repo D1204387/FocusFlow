@@ -1,9 +1,13 @@
 import SwiftUI
 
-    /// App 統一按鈕樣式：
-    /// - primary(填色)  : 實心主色白字
-    /// - secondary(外框): 白底主色外框與字
-    /// - tertiary(幽靈) : 淡灰膠囊底、主色字（次動作）
+// MARK: - App 統一按鈕樣式
+// primary: 實心主色，白字
+// secondary: 白底主色外框與字
+// tertiary: 淡灰膠囊底、主色字（次動作）
+// Kind: 按鈕樣式種類
+// Size: 按鈕尺寸
+// palette: 根據樣式回傳顏色組合
+// makeBody: 按鈕主體樣式渲染
 struct PrimaryButtonStyle: ButtonStyle {
     
     enum Kind {
@@ -61,4 +65,3 @@ struct PrimaryButtonStyle: ButtonStyle {
         }
     }
 }
-
