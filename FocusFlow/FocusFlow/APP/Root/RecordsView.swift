@@ -208,6 +208,7 @@ private struct ChartView: View {
         switch s {
         case "跑步": return Theme.Run.solid
         case "專注": return Theme.Focus.solid
+        case "遊戲": return Theme.Game.solid
         default:     return .gray.opacity(0.35)
         }
     }
@@ -226,7 +227,7 @@ private struct SummaryRow: View {
         HStack(spacing: 12) {
             stat("跑步(分)", value: totalRun,   color: Theme.Run.solid)
             stat("專注(分)", value: totalFocus, color: Theme.Focus.solid)
-            stat("遊戲(局)", value: totalGame,  color: .gray)
+            stat("遊戲(局)", value: totalGame,  color: Theme.Game.solid)
         }
     }
     
