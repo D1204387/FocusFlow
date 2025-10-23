@@ -1,0 +1,62 @@
+# Xcode
+#
+# gitignore contributors: remember to update the following line if you add entries later in the file
+# Xcode.gitignore stuff:
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcshareddata/
+DerivedData/
+.DS_Store
+*.swiftpm
+*.package.resolved
+
+# Build
+build/
+.build/
+
+# CocoaPods
+Pods/
+Podfile.lock
+*.xcworkspace
+
+# Carthage
+Carthage/
+*.resolved
+
+# Swift PM
+.swiftpm
+Package.resolved
+
+# Xcode
+*.xcodeproj
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Misc
+*.log
+*.dSYM/
+*.dSYM.zip
+.env
+.env.local
+
+# Testing
+.coverage
+coverage.xml
