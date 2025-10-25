@@ -9,11 +9,13 @@ import SwiftData
 
 @Model
 final class RunningRecord {
+    @Attribute(.unique) var id: UUID = UUID() // 唯一識別碼
     var date: Date
     var duration: TimeInterval   // 秒
     var bpm: Int?                // 可選：當時的節拍/步頻
     
     init(date: Date = .now, duration: TimeInterval, bpm: Int? = nil) {
+        self.id = UUID() // 初始化唯一識別碼
         self.date = date
         self.duration = duration
         self.bpm = bpm

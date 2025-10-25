@@ -8,11 +8,13 @@ import SwiftData
 
 @Model
 final class PomodoroRecord {
+    @Attribute(.unique) var id: UUID = UUID() // 唯一識別碼
     var date: Date
     var focus: Int   // 分鐘
     var rest: Int
     
     init(date: Date = .now, focus: Int, rest: Int) {
+        self.id = UUID() // 初始化唯一識別碼
         self.date = date
         self.focus = focus
         self.rest = rest
