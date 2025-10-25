@@ -5,92 +5,92 @@
 import Foundation
 import Observation
 
+// MARK: - App 設定管理
+/// - @Observable 提供反應式更新
+/// - 支援所有功能的設定（跑步、專注、顯示等）
+/// - 屬性變動時自動保存
+
 @MainActor
 @Observable
 final class AppSettings {
     static let shared = AppSettings()
     private let d = UserDefaults.standard
-        // MARK: - Keys
-    private enum Key {
-            // Running
-        static let runTargetMinutes   = "settings.runTargetMinutes"
-        static let bgmOn             = "settings.bgmOn"
-        static let metronomeOn       = "settings.metronomeOn"
-        static let metronomeBPM      = "settings.metronomeBPM"
-        
-            // Focus(Pomodoro)
-        static let focusMinutes      = "settings.focusMinutes"
-        static let shortBreakMinutes = "settings.shortBreakMinutes"
-        static let longBreakMinutes  = "settings.longBreakMinutes"
-        static let roundsBeforeLongBreak = "settings.roundsBeforeLongBreak"
-        static let autoContinue    = "settings.autoContinue"
-        
-            // Display
-        static let keepScreenOn      = "settings.keepScreenOn"
-    }
-        // Running
+    
+    // MARK: - Running Settings
+    
+    /// 跑步目標分鐘數: 20 分鐘
     var runTargetMinutes: Int {
-        didSet { d.set(runTargetMinutes, forKey: Key.runTargetMinutes) }
+        get { d.integer(forKey: "settings.runTargetMinutes") == 0 ? 20 : d.integer(forKey: "settings.runTargetMinutes") }
+        set { d.set(newValue, forKey: "settings.runTargetMinutes") }
     }
+
+    /// 背景音樂開關: 預設開啟
     var bgmOn: Bool {
-        didSet { d.set(bgmOn, forKey: Key.bgmOn) }
+        get { d.object(forKey: "settings.bgmOn") == nil ? true : d.bool(forKey: "settings.bgmOn") }
+        set { d.set(newValue, forKey: "settings.bgmOn") }
     }
+
+    /// 節拍器開關: 預設開啟
     var metronomeOn: Bool {
-        didSet { d.set(metronomeOn, forKey: Key.metronomeOn) }
+        get { d.object(forKey: "settings.metronomeOn") == nil ? true : d.bool(forKey: "settings.metronomeOn") }
+        set { d.set(newValue, forKey: "settings.metronomeOn") }
     }
+    
+    /// 節拍器 BPM: 預設 180
     var metronomeBPM: Int {
-        didSet { d.set(metronomeBPM, forKey: Key.metronomeBPM) }
+        get { d.integer(forKey: "settings.metronomeBPM") == 0 ? 180 : d.integer(forKey: "settings.metronomeBPM") }
+        set { d.set(newValue, forKey: "settings.metronomeBPM") }
     }
+
+    // MARK: - Focus Settings
     
-        // Focus
+    /// 專注時間（分鐘）: 25  分鐘
     var focusMinutes: Int {
-        didSet { d.set(focusMinutes, forKey: Key.focusMinutes) }
-    }
-    var shortBreakMinutes: Int {
-        didSet { d.set(shortBreakMinutes, forKey: Key.shortBreakMinutes) }
-    }
-    var longBreakMinutes: Int {
-        didSet { d.set(longBreakMinutes, forKey: Key.longBreakMinutes) }
-    }
-    var roundsBeforeLongBreak: Int {
-        didSet { d.set(roundsBeforeLongBreak, forKey: Key.roundsBeforeLongBreak) }
-    }
-    var autoContinue: Bool {
-        didSet { d.set(autoContinue, forKey: Key.autoContinue) }
-    }
-        // Display
-    var keepScreenOn: Bool {
-        didSet { d.set(keepScreenOn, forKey: Key.keepScreenOn) }
-    }
-    var pomodoroTargetPerDay: Int {
-        didSet { d.set(pomodoroTargetPerDay, forKey: "settings.pomodoroTargetPerDay") }
+        get { d.integer(forKey: "settings.focusMinutes") == 0 ? 25 : d.integer(forKey: "settings.focusMinutes") }
+        set { d.set(newValue, forKey: "settings.focusMinutes") }
     }
     
-    private init() {
-            // default values
-        runTargetMinutes   = d
-            .object(forKey: Key.runTargetMinutes) as? Int ?? 20
-        bgmOn             = d.object(
-            forKey: Key.bgmOn) as? Bool ?? true
-        metronomeOn       = d.object(
-            forKey: Key.metronomeOn) as? Bool ?? false
-        metronomeBPM      = d.object(
-            forKey: Key.metronomeBPM) as? Int ?? 180
-        focusMinutes      = d.object(
-            forKey: Key.focusMinutes) as? Int ?? 25
-        shortBreakMinutes = d.object(
-            forKey: Key.shortBreakMinutes) as? Int ?? 5
-        longBreakMinutes  = d.object(
-            forKey: Key.longBreakMinutes) as? Int ?? 15
-        roundsBeforeLongBreak = d.object(
-            forKey: Key.roundsBeforeLongBreak) as? Int ?? 4
-        autoContinue    = d.object(
-            forKey: Key.autoContinue) as? Bool ?? true
-        keepScreenOn      = d.object(
-            forKey: Key.keepScreenOn) as? Bool ?? true
-        pomodoroTargetPerDay = d.object(forKey: "settings.pomodoroTargetPerDay") as? Int ?? 1
+    /// 短休息時間（分鐘）: 5 分鐘
+    var shortBreakMinutes: Int {
+        get { d.integer(forKey: "settings.shortBreakMinutes") == 0 ? 5 : d.integer(forKey: "settings.shortBreakMinutes") }
+        set { d.set(newValue, forKey: "settings.shortBreakMinutes") }
     }
-        // MARK: - Utilities
+       
+    /// 長休息時間（分鐘）: 15 分鐘
+    var longBreakMinutes: Int {
+        get { d.integer(forKey: "settings.longBreakMinutes") == 0 ? 15 : d.integer(forKey: "settings.longBreakMinutes") }
+        set { d.set(newValue, forKey: "settings.longBreakMinutes") }
+    }
+    
+    /// 幾輪後進入長休息: 4 輪
+    var roundsBeforeLongBreak: Int {
+        get { d.integer(forKey: "settings.roundsBeforeLongBreak") == 0 ? 4 : d.integer(forKey: "settings.roundsBeforeLongBreak") }
+        set { d.set(newValue, forKey: "settings.roundsBeforeLongBreak") }
+    }
+    
+    /// 自動繼續下一輪: 預設開啟
+    var autoContinue: Bool {
+        get { d.object(forKey: "settings.autoContinue") == nil ? true : d.bool(forKey: "settings.autoContinue") }
+        set { d.set(newValue, forKey: "settings.autoContinue") }
+    }
+    
+    // MARK: - Display Settings
+    
+    /// 保持螢幕常亮: 預設開啟
+    var keepScreenOn: Bool {
+        get { d.object(forKey: "settings.keepScreenOn") == nil ? true : d.bool(forKey: "settings.keepScreenOn") }
+        set { d.set(newValue, forKey: "settings.keepScreenOn") }
+    }
+    
+    /// 每日番茄鐘目標數: 預設 1
+    var pomodoroTargetPerDay: Int {
+        get { d.integer(forKey: "settings.pomodoroTargetPerDay") == 0 ? 1 : d.integer(forKey: "settings.pomodoroTargetPerDay") }
+        set { d.set(newValue, forKey: "settings.pomodoroTargetPerDay") }
+    }
+
+    private init() {}
+  
+        // MARK: - Reset to Defaults
     func reset() {
         runTargetMinutes = 20
         bgmOn = true
@@ -108,7 +108,3 @@ final class AppSettings {
     }
 }
 
-// MARK: - App 設定管理
-// AppSettings: 管理所有使用者設定（跑步、專注、顯示等）
-// Key: UserDefaults 儲存鍵
-// 各屬性：對應不同功能的設定值，變動時自動儲存

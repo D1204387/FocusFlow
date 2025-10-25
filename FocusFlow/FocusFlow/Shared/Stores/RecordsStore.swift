@@ -15,7 +15,7 @@ struct RecordsStore {
     func runs(in range: DateInterval) throws -> [RunningRecord] {
         let fd = FetchDescriptor<RunningRecord>(
             predicate: #Predicate { $0.date >= range.start && $0.date <= range.end },
-            sortBy: [SortDescriptor(\.date, order: .forward)]
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         return try context.fetch(fd)
     }
@@ -23,7 +23,7 @@ struct RecordsStore {
     func pomodoros(in range: DateInterval) throws -> [PomodoroRecord] {
         let fd = FetchDescriptor<PomodoroRecord>(
             predicate: #Predicate { $0.date >= range.start && $0.date <= range.end },
-            sortBy: [SortDescriptor(\.date, order: .forward)]
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         return try context.fetch(fd)
     }
@@ -31,7 +31,7 @@ struct RecordsStore {
     func games(in range: DateInterval) throws -> [GameRecord] {
         let fd = FetchDescriptor<GameRecord>(
             predicate: #Predicate { $0.date >= range.start && $0.date <= range.end },
-            sortBy: [SortDescriptor(\.date, order: .forward)]
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         return try context.fetch(fd)
     }
