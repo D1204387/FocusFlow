@@ -6,6 +6,7 @@ struct GameView: View {
     @Environment(ModuleCoordinator.self) private var co
     @State private var game = GameModel()
     @State private var showLeaderboard = false
+    @State private var energyDeducted = false
     
     private let costToPlay = 1            // 與 RewardRules/ModuleCoordinator 對齊
     private var unlocked: Bool { co.energy >= costToPlay }
@@ -42,6 +43,12 @@ struct GameView: View {
                                 .allowsHitTesting(unlocked)
                                 .blur(radius: unlocked ? 0 : 2)
                                 .opacity(unlocked ? 1 : 0.6)
+                                .onAppear {
+                                    if unlocked && !energyDeducted {
+                                        co.spendEnergy(1)
+                                        energyDeducted = true
+                                    }
+                                }
                         }
                         .frame(width: side, height: side)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -73,7 +80,15 @@ struct GameView: View {
                                 LeaderboardView(leaderboard: game.leaderboard)
                             }
                         
-                        Button("重新開始") { game.restart() }
+                        Button("重新開始") {
+                            if unlocked {
+                                game.restart()
+                                co.spendEnergy(costToPlay)
+                                print("✅ 開始新遊戲，扣能量 \(costToPlay)")
+                            } else {
+                                print("❌ 能量不足，無法開始新遊戲")
+                            }
+                        }
                             .buttonStyle(PrimaryButtonStyle(.primary(Theme.Game.solid)))
                             .disabled(!unlocked || !(game.isGameOver || game.hasWon))
                     }
@@ -126,6 +141,8 @@ private struct GridView: View {
     }
 }
 
+
+
 private struct TileView: View {
     let value: Int
     let size: CGFloat
@@ -148,7 +165,8 @@ private struct TileView: View {
                     .font(.system(size: size * 0.36, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(value <= 4 ? Theme.text : .white)
-                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .padding(4)
                     .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
