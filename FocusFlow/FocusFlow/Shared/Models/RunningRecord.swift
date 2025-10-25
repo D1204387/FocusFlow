@@ -9,7 +9,7 @@ import SwiftData
 
 @Model
 final class RunningRecord {
-    @Attribute(.unique) var id: UUID = UUID() // 唯一識別碼
+    var id: UUID = UUID() 
     var date: Date
     var duration: TimeInterval   // 秒
     var bpm: Int?                // 可選：當時的節拍/步頻
@@ -22,4 +22,10 @@ final class RunningRecord {
     }
     
     @Transient var minutes: Int { Int(duration/60) }
+    
+    @Transient var seconds: Int { Int(duration) % 60 }
+    
+    @Transient var formattedDuration: String {
+        String(format: "%02d:%02d", minutes, seconds)
+    }
 }

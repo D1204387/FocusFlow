@@ -8,7 +8,7 @@ import SwiftData
 
 @Model
 final class GameRecord {
-    @Attribute(.unique) var id: UUID = UUID() // 唯一識別碼
+    var id: UUID = UUID()
     var date: Date
     var score: Int
     var seconds: Int
@@ -19,4 +19,6 @@ final class GameRecord {
         self.score = score
         self.seconds = seconds
     }
+    
+    @Transient var formattedDisplay: String { "分數：\(score)，時間：\(seconds)秒" }
 }

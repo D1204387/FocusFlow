@@ -8,7 +8,7 @@ import SwiftData
 
 @Model
 final class PomodoroRecord {
-    @Attribute(.unique) var id: UUID = UUID() // 唯一識別碼
+    var id: UUID = UUID()
     var date: Date
     var focus: Int   // 分鐘
     var rest: Int
@@ -19,4 +19,10 @@ final class PomodoroRecord {
         self.focus = focus
         self.rest = rest
     }
+    
+    @Transient var total: Int { focus + rest }
+    
+    @Transient var formattedDisplay: String { "\(focus)分 專注 + \(rest)分 休息" }
+    
+    @Transient var formattedTotal: String { "共 \(total) 分鐘" }           
 }

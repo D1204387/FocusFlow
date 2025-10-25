@@ -13,12 +13,19 @@ struct FocusFlowApp: App {
     
     // SwiftData ModelContainer
     /// 資料模型容器，包含應用程式的資料模型
-    private let container: ModelContainer = {
-        try! ModelContainer(for: RunningRecord.self,
-                            PomodoroRecord.self,
-                            GameRecord.self)
-    }()
+    private let container: ModelContainer
     
+    init() {
+        guard let container = try? ModelContainer(
+            for: RunningRecord.self,
+            PomodoroRecord.self,
+            GameRecord.self
+        ) else {
+            fatalError("Unable to initialize ModelContainer")
+        }
+        self.container = container
+    }
+        
     var body: some Scene {
         WindowGroup {
             FocusFlowRootView()
