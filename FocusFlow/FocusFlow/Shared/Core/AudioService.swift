@@ -29,13 +29,13 @@ final class AudioService {
         // MARK: - Session helpers
     private func configureSession() {
         let s = AVAudioSession.sharedInstance()
-        try? s.setCategory(.playback, options: [.mixWithOthers, .defaultToSpeaker])
+        try? s.setCategory(.playback, options: [.mixWithOthers])
         try? s.setActive(true)
     }
     
     private func deactivateSession() {
         try? AVAudioSession.sharedInstance()
-            .setActive(false, options: .notifyOthersOnDeactivation)
+            .setActive(false)
     }
     
         // MARK: - Public API（與 RunningView 對齊）
@@ -55,7 +55,6 @@ final class AudioService {
     
     
         // ---- BGM ----
-    
     func startBGM() {
         configureSession()
         if bgmPlayer == nil {
@@ -63,9 +62,11 @@ final class AudioService {
             let candidates = ["relaxing_piano", "nature_ambient", "light_music"]
             let shuffled  = candidates.shuffled()
             bgmPlayer = loadPlayer(names: shuffled, ext: "mp3")
-        }
-        bgmPlayer?.numberOfLoops = -1
-        bgmPlayer?.volume = 0.5
+        
+            bgmPlayer?.numberOfLoops = -1
+            bgmPlayer?.volume = 0.5
+            bgmPlayer?.prepareToPlay()   // ✅ 先預熱
+    }
         bgmPlayer?.play()
     }
     
