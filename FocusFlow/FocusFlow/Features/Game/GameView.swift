@@ -1,16 +1,38 @@
-    // Modules/Game/Views/GameView.swift
+// Modules/Game/Views/GameView.swift
 import SwiftUI
 import Observation
+import SwiftData
 
 struct GameView: View {
     @Environment(ModuleCoordinator.self) private var co
+    @Environment(\.modelContext) private var modelContext
     @State private var game = GameModel()
     @State private var showLeaderboard = false
     @State private var energyDeducted = false
+    @State private var didReportThisRound = false
     
-    private let costToPlay = 1            // 與 RewardRules/ModuleCoordinator 對齊
-    private var unlocked: Bool { co.energy >= costToPlay }
+    private var canPlay: Bool { energyDeducted || co.canEnterGame() }
     
+    // 棋盤手勢：第一次滑動前若未扣點 → 先扣；扣不到就不動棋盤
+    private var boardDrag: some Gesture {
+        DragGesture(minimumDistance: 30).onEnded { v in
+            guard !game.isGameOver, !game.hasWon else { return }
+            
+            if !energyDeducted {
+                guard co.spendForGameEntry() else { return }
+                energyDeducted = true
+            }
+            
+            if abs(v.translation.width) > abs(v.translation.height) {
+                game.moveTiles(direction: v.translation.width > 0 ? .right : .left)
+            } else {
+                game.moveTiles(direction: v.translation.height > 0 ? .down : .up)
+            }
+        }
+    }
+//    private let costToPlay = 1            // 與 RewardRules/ModuleCoordinator 對齊
+//    private var unlocked: Bool { co.energy >= costToPlay }
+      
     var body: some View {
         NavigationStack {
             ZStack {
@@ -38,19 +60,17 @@ struct GameView: View {
                                 .fill(Theme.Game.board)
                                 .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 6)
                             
-                            GridView(game: game, tileSize: tile, spacing: spacing)
+                            GridView( grid: game.grid, score: game.score,
+                                     isGameOver: game.isGameOver,
+                                         hasWon: game.hasWon, tileSize: tile, spacing: spacing   /*onSwipe: { dir in game.moveTiles(direction: dir) }*/ )
                                 .padding(14)
-                                .allowsHitTesting(unlocked)
-                                .blur(radius: unlocked ? 0 : 2)
-                                .opacity(unlocked ? 1 : 0.6)
-                                .onAppear {
-                                    if unlocked && !energyDeducted {
-                                        co.spendEnergy(1)
-                                        energyDeducted = true
-                                    }
-                                }
+                                .allowsHitTesting(canPlay)
+                                .blur(radius: canPlay ? 0 : 2)
+                                .opacity(canPlay ? 1 : 0.6)
                         }
                         .frame(width: side, height: side)
+                        .contentShape(Rectangle())          //  命中區含外圍 padding
+                        .highPriorityGesture(boardDrag)     //  手勢掛在外層
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
                     .frame(height: 380)
@@ -72,7 +92,7 @@ struct GameView: View {
                     HStack(spacing: 12) {
                         Button("上一步") { game.undo() }
                             .buttonStyle(PrimaryButtonStyle(.secondary(Theme.Game.solid)))
-                            .disabled(!unlocked || !game.canUndo)
+                            .disabled(!energyDeducted || !game.canUndo)
                         
                         Button("排行榜") { showLeaderboard = true }
                             .buttonStyle(PrimaryButtonStyle(.secondary(Theme.Game.solid)))
@@ -81,16 +101,17 @@ struct GameView: View {
                             }
                         
                         Button("重新開始") {
-                            if unlocked {
-                                game.restart()
-                                co.spendEnergy(costToPlay)
-                                print("✅ 開始新遊戲，扣能量 \(costToPlay)")
-                            } else {
-                                print("❌ 能量不足，無法開始新遊戲")
-                            }
+                            guard co.spendForGameEntry() else { return }
+                            energyDeducted = true
+                            didReportThisRound = false
+                            game.restart()
+//                            if unlocked && !energyDeducted {
+//                                co.spendEnergy(costToPlay)
+//                                energyDeducted = true
+//                            }
                         }
                             .buttonStyle(PrimaryButtonStyle(.primary(Theme.Game.solid)))
-                            .disabled(!unlocked || !(game.isGameOver || game.hasWon))
+                            .disabled(!co.canEnterGame() && !energyDeducted)
                     }
                     .padding(.top, 2)
                 }
@@ -98,20 +119,60 @@ struct GameView: View {
                 .padding(.bottom, 16)
                 
                     // 🔒 能量不足時的遮罩
-                if !unlocked {
-                    LockedOverlay(required: costToPlay)
+                if !canPlay {
+                    LockedOverlay(required: RewardRules.gameEntryCost)
                 }
             }
             .background(Theme.bg)
             .toolbarEnergy(title: "遊戲", tint: Theme.Game.solid)
+            
+            .onChange(of: game.hasWon) { _, won in
+                if won { reportResultIfNeeded(reason: "won") }
+            }
+            .onChange(of: game.isGameOver) { _, over in
+                if over { reportResultIfNeeded(reason: "gameOver") }
+            }
+
+            .onDisappear {
+                    // 離開頁面時重置遊戲狀態
+                energyDeducted = false
+                didReportThisRound = false
+            }
         }
+    }
+    
+    private func reportResultIfNeeded(reason: String) {
+        guard !didReportThisRound else { return }
+        didReportThisRound = true
+        
+        let seconds = max(0, game.elapsedSeconds)
+        let score   = game.score
+        
+            // 上報協調器（內部會存檔）
+        co.apply(.gameFinished(score: score, seconds: seconds), modelContext: modelContext)
+        
+        let rec = GameRecord(date: Date(), score: score, seconds: seconds)
+        modelContext.insert(rec)
+        try? modelContext.save()
+        
+            // 同步 Widget 統計
+        RecordsStore(context: modelContext).syncTodayStatsToAppGroup()
+        
+#if DEBUG
+        print("📊 Saved GameRecord — score=\(score) seconds=\(seconds) reason=\(reason)")
+#endif
     }
 }
 
 private struct GridView: View {
-    @Bindable var game: GameModel
+//    @Bindable var game: GameModel
+    let grid: [[Int]]
+    let score: Int
+    let isGameOver: Bool
+    let hasWon: Bool
     let tileSize: CGFloat
     let spacing: CGFloat
+//    let onSwipe: (MoveDirection) -> Void
     private let gridSize = 4
     
     var body: some View {
@@ -119,29 +180,26 @@ private struct GridView: View {
             ForEach(0..<gridSize, id: \.self) { r in
                 HStack(spacing: spacing) {
                     ForEach(0..<gridSize, id: \.self) { c in
-                        TileView(value: game.grid[r][c], size: tileSize)
+                        TileView(value: grid[r][c], size: tileSize)
                     }
                 }
             }
         }
-        .animation(.snappy(duration: 0.12), value: game.grid)
-        .animation(.snappy(duration: 0.12), value: game.score)
-        .gesture(
-            DragGesture(minimumDistance: 30).onEnded { v in
-                guard !game.isGameOver, !game.hasWon else { return }
-                if abs(v.translation.width) > abs(v.translation.height) {
-                    v.translation.width > 0 ? game.moveTiles(direction: .right)
-                    : game.moveTiles(direction: .left)
-                } else {
-                    v.translation.height > 0 ? game.moveTiles(direction: .down)
-                    : game.moveTiles(direction: .up)
-                }
-            }
-        )
+        .animation(.snappy(duration: 0.12), value: grid)
+        .animation(.snappy(duration: 0.12), value: score)
+//        .contentShape(Rectangle())
+//        .highPriorityGesture(
+//            DragGesture(minimumDistance: 30).onEnded { v in
+//                guard !isGameOver, !hasWon else { return }
+//                if abs(v.translation.width) > abs(v.translation.height) {
+//                    onSwipe(v.translation.width > 0 ? .right : .left)
+//                } else {
+//                    onSwipe(v.translation.height > 0 ? .down : .up)
+//                }
+//            }
+//        )
     }
 }
-
-
 
 private struct TileView: View {
     let value: Int

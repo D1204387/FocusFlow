@@ -15,6 +15,7 @@ final class AudioService {
     static let shared = AudioService()
     private init() {}
     
+   
         // Players
     private var bgmPlayer: AVAudioPlayer?
     private var clickPlayer: AVAudioPlayer?
@@ -28,7 +29,7 @@ final class AudioService {
         // MARK: - Session helpers
     private func configureSession() {
         let s = AVAudioSession.sharedInstance()
-        try? s.setCategory(.playback, options: [.mixWithOthers])
+        try? s.setCategory(.playback, options: [.mixWithOthers, .defaultToSpeaker])
         try? s.setActive(true)
     }
     
@@ -54,6 +55,7 @@ final class AudioService {
     
     
         // ---- BGM ----
+    
     func startBGM() {
         configureSession()
         if bgmPlayer == nil {

@@ -2,6 +2,7 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 @main
 struct FocusFlowApp: App {
     // MARK: - 全域狀態物件
@@ -9,7 +10,7 @@ struct FocusFlowApp: App {
     /// 模組協調器，負責管理應用程式的流程和狀態
     @State private var coordinator = ModuleCoordinator()
     /// 應用程式設定，共享單例
-    @State private var settings = AppSettings.shared
+    private let settings = AppSettings.shared
     
     // SwiftData ModelContainer
     /// 資料模型容器，包含應用程式的資料模型

@@ -14,7 +14,11 @@ final class GameModel {
     
     let gridSize: Int = 4
     
-    @ObservationIgnored
+        // 🔹 開始時間（不需要被觀察）
+    @ObservationIgnored private var startedAt: Date = Date()
+        // 🔹 目前已玩秒數（動態計算）
+    var elapsedSeconds: Int { max(0, Int(Date().timeIntervalSince(startedAt))) }
+
         // 儲存最多5步歷史
     private var history: [(grid: [[Int]], score: Int, isGameOver: Bool, hasWon: Bool)] = []
     
@@ -30,6 +34,7 @@ final class GameModel {
     }
     
     func startGame() {
+        self.startedAt = Date()
         self.isGameOver = false
         self.hasWon = false
         self.score = 0

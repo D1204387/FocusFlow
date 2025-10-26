@@ -156,7 +156,7 @@ struct SettingsView: View {
             .overlay{RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Theme.cardStroke, lineWidth: 1)
                     .allowsHitTesting(false)  // 卡片本身不響應點擊
             }
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous)) // 讓內部元件可點擊
+//            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous)) // 讓內部元件可點擊
         }
     }
     

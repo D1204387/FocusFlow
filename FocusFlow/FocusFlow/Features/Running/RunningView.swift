@@ -135,7 +135,7 @@ struct RunningView: View {
                 .padding(.horizontal, 16) // 讓內容不貼齊螢幕邊界
                 .background(Theme.bg)
                 .toolbarEnergy(title: "慢跑時光", tint: Theme.Run.solid)
-                .onAppear { AudioService.shared.stopRunSession() }
+//                .onAppear { AudioService.shared.stopRunSession() }
                 .onDisappear { AudioService.shared.stopRunSession() }
                 .onReceive(tick) { t in
                     guard isRunning else {return}
@@ -249,11 +249,13 @@ struct RunningView: View {
         isRunning = true
         isPaused = false
         
-        AudioService.shared.startRunSession(
-            enableMusic: settings.bgmOn,
-            enableMetronome: settings.metronomeOn,
-            bpm: settings.metronomeBPM
-        )
+        DispatchQueue.main.async {
+            AudioService.shared.startRunSession(
+                enableMusic: settings.bgmOn,
+                enableMetronome: settings.metronomeOn,
+                bpm: settings.metronomeBPM
+            )
+        }
     }
     
     private func pause() {

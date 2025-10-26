@@ -9,11 +9,19 @@ import SwiftUI
 import SwiftData
 
 struct FocusFlowRootView: View {
-    enum Tab { case running, focus, game, records, settings }
-    @State private var tab: Tab = .running
+//    enum Tab { case running, focus, game, records, settings }
+//    @State private var tab: Tab = .running
+    @SceneStorage("ff.root.tabIndex") private var tabIndex : Int = 0
+    
+//    private var tabBinding: Binding<Tab> {
+//        Binding(
+//        get { Tab(rawValue: tabRaw) ?? .running }
+//        set { tabRaw = $0.rawValue }
+//        )
+//    }
     
     var body: some View {
-        TabView(selection: $tab) {
+        TabView(selection: $tabIndex) {
             RunningView().tabItem { Label("跑步", systemImage: "figure.run") }
             FocusCycleView().tabItem { Label("專注", systemImage: "timer") } // 專注入口
  
