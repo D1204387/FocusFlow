@@ -111,14 +111,14 @@ struct RecordsView: View {
                     
                     SummaryRow(bins: bins) // 摘要列
                     
-                    ChartView(bins: bins, category: category)
+                    ChartView(bins: bins.sorted {$0.date < $1.date}, category: category)
                         .frame(height: 260)
                         .background(Theme.bg)
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke))
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .softShadow()
                     
-                    RecordsList(bins: bins, category: category) // 記錄列表
+                    RecordsList(bins: bins.sorted {$0.date > $1.date}, category: category) // 記錄列表
                 }
                 .padding()
             }
@@ -269,7 +269,7 @@ private struct RecordsList: View {
                     }
                     if category == .all || category == .game {
                         Label("\(d.gamePlays) 局", systemImage: "gamecontroller")
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(Theme.Game.solid)
                     }
                 }
                 .padding(.vertical, 6)

@@ -11,7 +11,10 @@ import SwiftData
 struct FocusFlowRootView: View {
 //    enum Tab { case running, focus, game, records, settings }
 //    @State private var tab: Tab = .running
-    @SceneStorage("ff.root.tabIndex") private var tabIndex : Int = 0
+    enum StorageKeys {
+        static let rootTabIndex = "ff.root.tabIndex"
+    }
+    @SceneStorage(StorageKeys.rootTabIndex) private var tabIndex : Int = 0
     
 //    private var tabBinding: Binding<Tab> {
 //        Binding(
@@ -22,14 +25,24 @@ struct FocusFlowRootView: View {
     
     var body: some View {
         TabView(selection: $tabIndex) {
-            RunningView().tabItem { Label("跑步", systemImage: "figure.run") }
-            FocusCycleView().tabItem { Label("專注", systemImage: "timer") } // 專注入口
- 
-            RecordsView().tabItem { Label("記錄", systemImage: "chart.bar") }
-            GameView().tabItem { Label("遊戲", systemImage: "gamecontroller.fill") }
-
+            RunningView()
+                .tabItem { Label("跑步", systemImage: "figure.run") }
+                .tag(0)
             
-            SettingsView().tabItem { Label("設定", systemImage: "gear") }
+            FocusCycleView()
+                .tabItem { Label("專注", systemImage: "timer") }         .tag(1)
+ 
+            RecordsView()
+                .tabItem { Label("記錄", systemImage: "chart.bar") }
+                .tag(2)
+            
+            GameView()
+                .tabItem { Label("遊戲", systemImage: "gamecontroller.fill") }
+                .tag(3)
+           
+            SettingsView()
+                .tabItem { Label("設定", systemImage: "gear") }
+                .tag(4)
         }
         .tint(.black)
         .background(Color.white.ignoresSafeArea())

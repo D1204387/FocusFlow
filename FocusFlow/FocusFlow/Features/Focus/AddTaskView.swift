@@ -32,7 +32,7 @@ struct AddTaskView: View {
                     HStack(spacing: 16) {
                         Button(action: { minutes = 5; seconds = 0 }) {
                             Text("5 分鐘")
-                                .foregroundColor(Theme.Focus.solid)
+                                .foregroundStyle(Theme.Focus.solid)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(Color.white)
@@ -44,7 +44,7 @@ struct AddTaskView: View {
                         }
                         Button(action: { minutes = 10; seconds = 0 }) {
                             Text("10 分鐘")
-                                .foregroundColor(Theme.Focus.solid)
+                                .foregroundStyle(Theme.Focus.solid)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(Color.white)
@@ -56,7 +56,7 @@ struct AddTaskView: View {
                         }
                         Button(action: { minutes = 25; seconds = 0 }) {
                             Text("25 分鐘")
-                                .foregroundColor(Theme.Focus.solid)
+                                .foregroundStyle(Theme.Focus.solid)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(Color.white)
@@ -78,11 +78,11 @@ struct AddTaskView: View {
                     // 新增：本次設定區塊，顯示目前選擇的時間
                     Text("本次設定：\(minutes) 分 \(seconds) 秒")
                         .font(.headline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .padding(.bottom, 8)
                     Text("預設：\(AppSettings.shared.focusMinutes) 分鐘")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                     Button("完成") {
                         let model = TaskModel(name: taskName, minutes: minutes, seconds: seconds)
                         onComplete(model)

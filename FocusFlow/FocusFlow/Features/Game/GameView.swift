@@ -62,7 +62,7 @@ struct GameView: View {
                             
                             GridView( grid: game.grid, score: game.score,
                                      isGameOver: game.isGameOver,
-                                         hasWon: game.hasWon, tileSize: tile, spacing: spacing   /*onSwipe: { dir in game.moveTiles(direction: dir) }*/ )
+                                         hasWon: game.hasWon, tileSize: tile, spacing: spacing)
                                 .padding(14)
                                 .allowsHitTesting(canPlay)
                                 .blur(radius: canPlay ? 0 : 2)
@@ -70,7 +70,8 @@ struct GameView: View {
                         }
                         .frame(width: side, height: side)
                         .contentShape(Rectangle())          //  命中區含外圍 padding
-                        .highPriorityGesture(boardDrag)     //  手勢掛在外層
+                        .highPriorityGesture(boardDrag, including: .all)     //  手勢掛在外層
+                        .simultaneousGesture(DragGesture(minimumDistance: 0))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
                     .frame(height: 380)
@@ -105,10 +106,7 @@ struct GameView: View {
                             energyDeducted = true
                             didReportThisRound = false
                             game.restart()
-//                            if unlocked && !energyDeducted {
-//                                co.spendEnergy(costToPlay)
-//                                energyDeducted = true
-//                            }
+
                         }
                             .buttonStyle(PrimaryButtonStyle(.primary(Theme.Game.solid)))
                             .disabled(!co.canEnterGame() && !energyDeducted)
@@ -172,7 +170,7 @@ private struct GridView: View {
     let hasWon: Bool
     let tileSize: CGFloat
     let spacing: CGFloat
-//    let onSwipe: (MoveDirection) -> Void
+
     private let gridSize = 4
     
     var body: some View {
@@ -187,17 +185,6 @@ private struct GridView: View {
         }
         .animation(.snappy(duration: 0.12), value: grid)
         .animation(.snappy(duration: 0.12), value: score)
-//        .contentShape(Rectangle())
-//        .highPriorityGesture(
-//            DragGesture(minimumDistance: 30).onEnded { v in
-//                guard !isGameOver, !hasWon else { return }
-//                if abs(v.translation.width) > abs(v.translation.height) {
-//                    onSwipe(v.translation.width > 0 ? .right : .left)
-//                } else {
-//                    onSwipe(v.translation.height > 0 ? .down : .up)
-//                }
-//            }
-//        )
     }
 }
 

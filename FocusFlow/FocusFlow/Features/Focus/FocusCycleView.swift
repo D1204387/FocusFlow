@@ -109,7 +109,7 @@ struct FocusCycleView: View {
                     // 新增任務按鈕移到時鐘下方
                 Button(action: { showAddTask = true }) {
                     Text("新增任務 +")
-                        .foregroundColor(.black)
+                        .foregroundStyle(.black)
                 }
                 .buttonStyle(PrimaryButtonStyle(.tertiary(Theme.Focus.solid)))
                 
@@ -140,11 +140,11 @@ struct FocusCycleView: View {
                                 Spacer()
                                 Text(String(format: "%02d:%02d", task.minutes, task.seconds))
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     // 完成打勾圖案
                                 if task.isCompleted {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.green)
+                                        .foregroundStyle(.green)
                                 }
                             }
                             .padding(.vertical, 2)
