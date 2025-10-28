@@ -9,10 +9,18 @@
 /* Begin PBXBuildFile section */
 		930DE8502E9CE501005E078C /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 930DE8322E9C9D82005E078C /* WidgetKit.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		930DE8512E9CE501005E078C /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 930DE8342E9C9D82005E078C /* SwiftUI.framework */; settings = {ATTRIBUTES = (Required, ); }; };
+		AC0FC8852EB0A81300427667 /* FocusFlowWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AC0FC8222EB0A7D700427667 /* FocusFlowWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		930DE85A2E9CE502005E078C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 93F7D3BF2E8711CC00888EC8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 930DE84E2E9CE501005E078C;
+			remoteInfo = FocusFlowWidgetsExtension;
+		};
+		AC0FC8862EB0A81300427667 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 93F7D3BF2E8711CC00888EC8 /* Project object */;
 			proxyType = 1;
@@ -28,6 +36,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				AC0FC8852EB0A81300427667 /* FocusFlowWidgetsExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -38,8 +47,8 @@
 		930DE8322E9C9D82005E078C /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		930DE8342E9C9D82005E078C /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		930DE8462E9C9D9F005E078C /* FocusFlowWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FocusFlowWidgetsExtension.entitlements; sourceTree = "<group>"; };
-		930DE84F2E9CE501005E078C /* FocusFlowWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; name = FocusFlowWidgetsExtension.appex; path = "/Users/yijouchen/Documents/GitHub/FocusFlow/FocusFlow/build/Debug-iphoneos/FocusFlowWidgetsExtension.appex"; sourceTree = "<absolute>"; };
-		939C01502E8D88D000D9E5A2 /* FocusFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = FocusFlow.app; path = "/Users/yijouchen/Documents/GitHub/FocusFlow/FocusFlow/build/Debug-iphoneos/FocusFlow.app"; sourceTree = "<absolute>"; };
+		AC0FC8212EB0A7D700427667 /* FocusFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC0FC8222EB0A7D700427667 /* FocusFlowWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FocusFlowWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -137,6 +146,8 @@
 		93F7D3C82E8711CC00888EC8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				AC0FC8212EB0A7D700427667 /* FocusFlow.app */,
+				AC0FC8222EB0A7D700427667 /* FocusFlowWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -160,7 +171,7 @@
 			packageProductDependencies = (
 			);
 			productName = FocusFlowWidgetsExtension;
-			productReference = 930DE84F2E9CE501005E078C /* FocusFlowWidgetsExtension.appex */;
+			productReference = AC0FC8222EB0A7D700427667 /* FocusFlowWidgetsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		939C014F2E8D88D000D9E5A2 /* FocusFlow */ = {
@@ -176,6 +187,7 @@
 			);
 			dependencies = (
 				930DE85B2E9CE502005E078C /* PBXTargetDependency */,
+				AC0FC8872EB0A81300427667 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				939C01512E8D88D000D9E5A2 /* FocusFlow */,
@@ -184,7 +196,7 @@
 			packageProductDependencies = (
 			);
 			productName = FocusFlow;
-			productReference = 939C01502E8D88D000D9E5A2 /* FocusFlow.app */;
+			productReference = AC0FC8212EB0A7D700427667 /* FocusFlow.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -267,6 +279,11 @@
 			isa = PBXTargetDependency;
 			target = 930DE84E2E9CE501005E078C /* FocusFlowWidgetsExtension */;
 			targetProxy = 930DE85A2E9CE502005E078C /* PBXContainerItemProxy */;
+		};
+		AC0FC8872EB0A81300427667 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 930DE84E2E9CE501005E078C /* FocusFlowWidgetsExtension */;
+			targetProxy = AC0FC8862EB0A81300427667 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
