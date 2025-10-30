@@ -39,51 +39,34 @@ struct RecordsStore {
         return try context.fetch(fd)
     }
     
-    // MARK：統計方法
-    /// 獲取今天的統計數據
+        // MARK：統計方法
+        /// 獲取今天的統計數據
     func getTodayStats() -> (runMinutes: Int, focusMinutes: Int, gameCount: Int) {
         let today = Calendar.current.startOfDay(for: Date())
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
         let range = DateInterval(start: today, end: tomorrow)
         
-        let runMinutes = (try? runs(in: range).map { $0.minutes }.reduce(0, +)) ?? 0
+        let runMinutes = (try? runs(in: range).map { Int($0.duration/60) }.reduce(0, +)) ?? 0
         let focusMinutes = (try? pomodoros(in: range).map { $0.focus }.reduce(0, +)) ?? 0
         let gameCount = (try?  games(in: range).count) ?? 0
         
         return (runMinutes, focusMinutes, gameCount)
     }
     
-    /// 獲取本週(過去7天)的統計數據
+        /// 獲取本週的統計數據
     func getWeekStats() -> (runMinutes: Int, focusMinutes: Int, gameCount: Int) {
-        let today = Calendar.current.startOfDay(for: Date())
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: today)!
-        let range = DateInterval(start: weekAgo, end: today)
+        let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date())!
         
-        let runs = (try? runs(in: range)) ?? []
-        let pomodoros = (try? pomodoros(in: range)) ?? []
-        let games = (try? games(in: range)) ?? []
+        let runs = (try? runs(in: weekInterval)) ?? []
+        let pomodoros = (try? pomodoros(in: weekInterval)) ?? []
+        let games = (try? games(in: weekInterval)) ?? []
         
         var stats: [Date: (runMinutes: Int, focusMinutes: Int, gameCount: Int)] = [:]
-        
-        for i in 0..<7 {
-            let day = Calendar.current.date(byAdding: .day, value: i, to: weekAgo)!
-            let dayStart = Calendar.current.startOfDay(for: day)
-            let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)!
-            let dayRange = DateInterval(start: dayStart, end: dayEnd)
-            
-            let runMins = runs.filter { dayRange.contains($0.date) }
-                .map { $0.minutes }.reduce(0, +)
-            let focusMins = pomodoros.filter { dayRange.contains($0.date) }
-                .map { $0.focus }.reduce(0, +)
-            let gameCnt = games.filter { dayRange.contains($0.date) }.count
-            
-            stats[day] = (runMins, focusMins, gameCnt)
-        }
-        
-        // 彙總整週數據
-        let totalRunMinutes = stats.values.map { $0.runMinutes }.reduce(0, +)
-        let totalFocusMinutes = stats.values.map { $0.focusMinutes }.reduce(0, +)
-        let totalGameCount = stats.values.map { $0.gameCount }.reduce(0, +)
+    
+            // 彙總整週數據
+        let totalRunMinutes = runs.map { Int($0.duration / 60) } .reduce(0, +)
+        let totalFocusMinutes = pomodoros.map { $0.focus }.reduce(0, +)
+        let totalGameCount = games.count
         return (
             totalRunMinutes,
             totalFocusMinutes,
@@ -91,18 +74,40 @@ struct RecordsStore {
         )
     }
     
-    // MARK: - Widget 同步
-   
-    /// 獲取今天的跑步分鐘數
+        // MARK: - Widget 同步
+    
+        /// 獲取今天的跑步分鐘數
     func getTodayRunMinutes() -> Int {
         let today = Calendar.current.startOfDay(for: Date())
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
         let range = DateInterval(start: today, end: tomorrow)
         
-        return(try? runs(in: range).map { $0.minutes }.reduce(0, +)) ?? 0
+        return(try? runs(in: range).map { Int($0.duration / 60) }.reduce(0, +)) ?? 0
     }
     
-    /// 獲取今天的番茄統計數據
+        /// 取得本週每日分鐘數（用於圖表）
+    func getWeeklyRunMinutesByDay() -> [Date: Double] {
+        let weekInterval = Calendar.current.dateInterval(of: .weekOfYear, for: Date())!
+        let runs = (try? runs(in: weekInterval)) ?? []
+        
+        var map: [Date: Double] = [:]
+        for run in runs {
+            let day = Calendar.current.startOfDay(for: run.date)
+            map[day, default: 0] += run.duration / 60
+        }
+        return map
+    }
+   
+    private func getRunsInWeek(_ weekInterval: DateInterval) -> [RunningRecord] {
+        return (try? runs(in: weekInterval)) ?? []
+    }
+    
+        // 週區間計算
+    private func getCurrentWeekInterval() -> DateInterval {
+        return Calendar.current.dateInterval(of: .weekOfYear, for: Date())!
+    }
+    
+        /// 獲取今天的番茄統計數據
     func getTodayPomodoroCount() -> Int {
         let today = Calendar.current.startOfDay(for: Date())
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
@@ -111,7 +116,7 @@ struct RecordsStore {
         return(try? pomodoros(in: range).count) ?? 0
     }
     
-    /// 獲取今天的遊戲統計數據
+        /// 獲取今天的遊戲統計數據
     func getTodayGameCount() -> Int {
         let today = Calendar.current.startOfDay(for: Date())
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
@@ -121,37 +126,76 @@ struct RecordsStore {
     }
     
     
-    /// 同步今天的統計數據到 App Group 的 UserDefaults
+        /// 同步今天的統計數據到 App Group 的 UserDefaults
     func syncTodayStatsToAppGroup(){
         guard let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow") else { return }
         
         let todayRunMinutes = getTodayRunMinutes()
         let todayPomodoroCount = getTodayPomodoroCount()
         let todayGameCount = getTodayGameCount()
+        let streakDays = getStreakDays()
         
         let todayMinutes = todayRunMinutes + (todayPomodoroCount * 25) // 假設每個番茄是25分鐘
         let todayCount = todayPomodoroCount + todayGameCount
         
         userDefaults.set(todayRunMinutes, forKey: "todayRunMinutes")
         userDefaults.set(todayPomodoroCount, forKey: "todayPomodoroCount")
+        
         userDefaults.set(todayGameCount, forKey: "todayGameCount")
         
         userDefaults.set(todayMinutes, forKey: "todayMinutes")
         userDefaults.set(todayCount, forKey: "todayCount")
         
+        userDefaults.set(streakDays, forKey: "streakDays")
+        
         userDefaults.synchronize()
+        
+            // ✅ 新增除錯資訊
+        print("📊 同步今日統計: 跑步 \(todayRunMinutes) 分, 番茄 \(todayPomodoroCount) 個, 總計 \(todayMinutes) 分, 連續 \(streakDays) 天")
     }
     
-    /// 同步本週的統計數據到 App Group 的 UserDefaults
+        /// 同步本週的統計數據到 App Group 的 UserDefaults
     func syncWeekStatsToAppGroup(){
         guard let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow") else { return }
         
         let (weekRunMinutes, weekFocusMinutes, weekGameCount) = getWeekStats()
-        let weekTotalMinutes = weekRunMinutes + weekFocusMinutes
+
         userDefaults.set(weekRunMinutes, forKey: "weekRunMinutes")
         userDefaults.set(weekFocusMinutes, forKey: "weekFocusMinutes")
         userDefaults.set(weekGameCount, forKey: "weekGameCount")
-        userDefaults.set(weekTotalMinutes, forKey: "weekTotalMinutes")
+
         userDefaults.synchronize()
+        
+        print("📊 同步週統計到 Widget:")
+        print("  weekRunMinutes: \(weekRunMinutes) 分")
+        print("  weekFocusMinutes: \(weekFocusMinutes) 分")
+        print("  weekGameCount: \(weekGameCount) 次")
+    }
+    
+    func getStreakDays() -> Int {
+        let calendar = Calendar.current
+        var streakDays: Int = 0
+        var currentDate = calendar.startOfDay(for: Date())
+        
+        while true {
+            let nextDay = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+            let range = DateInterval(start: currentDate, end: nextDay)
+            
+            let hasRunning = (try? runs(in: range).isEmpty == false) ?? false
+            let hasPomodoro = (try? pomodoros(in: range).isEmpty  == false) ?? false
+            
+            if hasRunning || hasPomodoro {
+                streakDays += 1
+                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate)!
+            } else {
+                break
+            }
+            
+            if streakDays > 365 {
+                break
+            }
+        }
+        
+        return streakDays
     }
 }

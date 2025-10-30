@@ -207,17 +207,16 @@ struct RunningView: View {
     
         // 本週總分鐘數
     private var weeklyMinutes: Int {
-        Int(runsThisWeek.reduce(0) { $0 + $1.duration } / 60)
+        let store = RecordsStore(context: ctx)
+        let (weekRunMinutes, _, _) = store.getWeekStats()
+        return weekRunMinutes
     }
     
         // 每日分鐘（用於圖表）
     private var minutesByDay: [Date: Double] {
-        var map: [Date: Double] = [:]
-        for r in runsThisWeek {
-            let day = Calendar.current.startOfDay(for: r.date)
-            map[day, default: 0] += r.duration / 60
-        }
-        return map
+        let store = RecordsStore(context: ctx)
+
+        return store.getWeeklyRunMinutesByDay()
     }
     
         // 本週完成百分比 = 本週分鐘 / (每天目標 * 7)
@@ -227,18 +226,9 @@ struct RunningView: View {
         return min(100, max(0, Int(round(pct))))
     }
     
-        // 連續天數（從今天開始往回數，一天有任意跑步即算 1）
     private var streakDays: Int {
-        let daysWithRun: Set<Date> = Set(
-            runs.map { Calendar.current.startOfDay(for: $0.date) }
-        )
-        var c = 0
-        var d = Calendar.current.startOfDay(for: Date())
-        while daysWithRun.contains(d) {
-            c += 1
-            d = Calendar.current.date(byAdding: .day, value: -1, to: d)!
-        }
-        return c
+        let store = RecordsStore(context: ctx)
+        return store.getStreakDays()
     }
     
         // MARK: - Actions
@@ -288,7 +278,12 @@ struct RunningView: View {
         guard sec >= 60 else {reset(); return }
         // 紀錄 + 加能量
         ctx.insert(RunningRecord(duration: sec))
-        RecordsView().updateWidgetRunSummary(runs: runs) // 新增：同步 Widget 資料
+        
+        // 正確的 Widget 同步方式
+        let recordsStore = RecordsStore(context: ctx)
+        recordsStore.syncTodayStatsToAppGroup()
+        recordsStore.syncWeekStatsToAppGroup()
+
         co.apply(.runCompleted(minutes: Int(sec / 60)), modelContext: ctx)
         showFinishSheet = true // 🎉 顯示完成視窗
     }
@@ -310,6 +305,12 @@ struct RunningView: View {
         let sec = max(Double(targetSeconds), elapsed)
         
         ctx.insert(RunningRecord(duration: sec))
+        
+        // 正確的 Widget 同步方式
+        let recordsStore = RecordsStore(context: ctx)
+        recordsStore.syncTodayStatsToAppGroup()
+        recordsStore.syncWeekStatsToAppGroup()
+        
         co.apply(.runCompleted(minutes: Int(sec / 60)), modelContext: ctx)
         showFinishSheet = true // 🎉 顯示完成視窗
     }

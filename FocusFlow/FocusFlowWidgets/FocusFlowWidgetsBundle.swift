@@ -4,7 +4,8 @@ import SwiftUI
 @main
 struct FocusFlowWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        PomodoroWidget()
-        FocusFlowWidget()
+        FocusFlowWidget() // 跑步專用 Widget
+        PomodoroWidget() // 專注番茄鐘 Widget
+
     }
 }

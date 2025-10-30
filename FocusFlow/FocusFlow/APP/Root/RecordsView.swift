@@ -83,8 +83,13 @@ struct RecordsView: View {
         var id: Self { self }
         var interval: DateInterval {
             let end = Date()
-            let start = Calendar.current.date(byAdding: .day, value: self == .week ? -6 : -29, to: end)!
-            return DateInterval(start: start.startOfDay, end: end.endOfDay)
+            switch self {
+            case .week:
+                return Calendar.current.dateInterval(of: .weekOfYear, for: end)!
+            case .month:
+                let start = Calendar.current.date(byAdding: .day, value: self == .week ? -6 : -29, to: end)!
+                return DateInterval(start: start.startOfDay, end: end.endOfDay)
+            }
         }
     }
     
