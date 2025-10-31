@@ -61,7 +61,7 @@ struct RecordsStore {
         let pomodoros = (try? pomodoros(in: weekInterval)) ?? []
         let games = (try? games(in: weekInterval)) ?? []
         
-        var stats: [Date: (runMinutes: Int, focusMinutes: Int, gameCount: Int)] = [:]
+//        var stats: [Date: (runMinutes: Int, focusMinutes: Int, gameCount: Int)] = [:]
     
             // 彙總整週數據
         let totalRunMinutes = runs.map { Int($0.duration / 60) } .reduce(0, +)
@@ -116,6 +116,19 @@ struct RecordsStore {
         return(try? pomodoros(in: range).count) ?? 0
     }
     
+        // 新增專用函式（給 Widget 使用）
+    func getTodayPomodoroStats() -> (focusMinutes: Int, sessions: Int) {
+        let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        let range = DateInterval(start: today, end: tomorrow)
+        
+        let pomodoros = (try? pomodoros(in: range)) ?? []
+        let focusMinutes = pomodoros.map { $0.focus }.reduce(0, +)
+        let sessions = pomodoros.count
+        
+        return (focusMinutes, sessions)
+    }
+    
         /// 獲取今天的遊戲統計數據
     func getTodayGameCount() -> Int {
         let today = Calendar.current.startOfDay(for: Date())
@@ -131,7 +144,8 @@ struct RecordsStore {
         guard let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow") else { return }
         
         let todayRunMinutes = getTodayRunMinutes()
-        let todayPomodoroCount = getTodayPomodoroCount()
+        let (todayFocusMinutes, todayPomodoroCount) = getTodayPomodoroStats()
+//        let todayPomodoroCount = getTodayPomodoroCount()
         let todayGameCount = getTodayGameCount()
         let streakDays = getStreakDays()
         
@@ -140,6 +154,7 @@ struct RecordsStore {
         
         userDefaults.set(todayRunMinutes, forKey: "todayRunMinutes")
         userDefaults.set(todayPomodoroCount, forKey: "todayPomodoroCount")
+        userDefaults.set(todayFocusMinutes, forKey: "todayFocusMinutes") // 新
         
         userDefaults.set(todayGameCount, forKey: "todayGameCount")
         

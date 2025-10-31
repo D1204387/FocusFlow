@@ -35,19 +35,34 @@ struct PomodoroProvider: TimelineProvider {
         let s = FocusFlowStore.load()
         let now = Date()
         let remaining: TimeInterval = {
-            guard s.isRunning, let end = s.endDate else { return 0 }
-            return max(0, end.timeIntervalSince(now))
+            guard s.isRunning, let end = s.endDate else {
+                print("❌ Widget: 沒有運行或結束時間為空")
+                return 0 }
+            let remainingTime = max(0, end.timeIntervalSince(now))
+            print("⏰ Widget: 剩餘時間 \(Int(remainingTime/60)):\(Int(remainingTime.truncatingRemainder(dividingBy: 60)))")
+            return remainingTime
         }()
         
-            // 2) 今天統計（Shared/WidgetDataManager）
-        let (focusMin, sessions) = WidgetDataManager.shared.computePomodoroToday()
+            // 2) ✅ 優先使用 App Group UserDefaults（與 RecordsStore 同步）
+        let userDefaults = UserDefaults(suiteName: "group.com.buildwithharry.focusflow")
+        let todayFocusMinutes = userDefaults?.integer(forKey: "todayFocusMinutes") ?? 0
+        let todayPomodoroCount = userDefaults?.integer(forKey: "todayPomodoroCount") ?? 0
         
+            // ✅ 詳細除錯輸出
+        print("🔄 Widget 完整狀態:")
+        print("   - 階段: \(s.phase)")
+        print("   - 運行中: \(s.isRunning)")
+        print("   - 結束時間: \(s.endDate?.description ?? "無")")
+        print("   - 剩餘時間: \(Int(remaining))秒")
+        print("   - 今日專注: \(todayFocusMinutes)分")
+        print("   - 完成次數: \(todayPomodoroCount)次")
+                
         return .init(date: now,
                      phase: s.phase,
                      isRunning: s.isRunning,
                      remaining: remaining,
-                     focusMinutesToday: focusMin,
-                     sessionsToday: sessions)
+                     focusMinutesToday: todayFocusMinutes,
+                     sessionsToday: todayPomodoroCount)
     }
 }
 
@@ -66,103 +81,127 @@ struct PomodoroView: View {
     private func timeStr(_ sec: TimeInterval) -> String {
         String(format: "%02d:%02d", Int(sec) / 60, Int(sec) % 60)
     }
-
     
         // Small：狀態膠囊 + 大倒數 + 今日累積
     private var smallView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 3) {
                 Image(systemName: "timer")
-                Text("Pomodoro")
-                    .font(.subheadline).fontWeight(.semibold)
-                    .lineLimit(1)
+                    .font(.caption2)
+                    .foregroundStyle(.green)
+                Text("專注蕃茄")
+                    .font(.caption2).fontWeight(.medium)
+                    .foregroundStyle(.green)
                 Spacer()
-                // 手動刷新按鈕
-                if #available(iOS 17.0, *) {
-                    Button(intent: RefreshWidgetIntent()) {
-                        Image(systemName: "arrow.clockwise.circle")
-                            .font(.title2)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("手動刷新")
-                }
             }
-            .foregroundStyle(.blue)
             
             Text(statusText)
-                .font(.title3).fontWeight(.bold)
-                .foregroundStyle(phaseColor)
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(phaseColor.opacity(0.12), in: Capsule())
+                .font(.caption2).fontWeight(.medium)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 6).padding(.vertical, 2)
+                .background(phaseColor, in: Capsule())
             
-            Text(entry.isRunning ? timeStr(entry.remaining) : "未在倒數")
-                .font(.title2).monospacedDigit()
+            Spacer(minLength: 2)
             
-            ProgressView(value: progress, total: 1)
-                .progressViewStyle(.linear)
+            Text(entry.isRunning ? timeStr(entry.remaining) : "--:--")
+                .font(.title2).fontWeight(.bold)
+                .foregroundStyle(entry.isRunning ? .green : .secondary)
+                .monospacedDigit()
             
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle")
-                Text("\(entry.focusMinutesToday) 分（\(entry.sessionsToday) 次）")
-                    .font(.footnote).monospacedDigit()
-                Spacer()
+            if entry.isRunning {
+                ProgressView(value: progress, total: 1)
+                    .progressViewStyle(.linear)
+                    .tint(.green)
+                    .scaleEffect(y: 0.7)
+                    .padding(.vertical, 1)
+            } else {
+                ProgressView(value: 0, total: 1)
+                    .progressViewStyle(.linear)
+                    .tint(.gray)
+                    .scaleEffect(y: 0.7)
+                    .padding(.vertical, 1)
             }
+            
+            Spacer(minLength: 1)
+            
+            Text("\(entry.focusMinutesToday)分・\(entry.sessionsToday)次")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             
             Spacer(minLength: 0)
         }
-        .padding(12)
+        .padding(6)
         .containerBackground(.fill.tertiary, for: .widget)
     }
     
         // Medium：左側狀態區 + 右側統計卡
     private var mediumView: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     Image(systemName: entry.phase == .focus ? "bolt.fill" : "cup.and.saucer")
+                        .font(.title3)
+                        .foregroundStyle(.green)
                     Text(statusText)
                         .font(.headline).fontWeight(.semibold)
                         .foregroundStyle(phaseColor)
                     Spacer()
-                    // 手動刷新按鈕
-                    if #available(iOS 17.0, *) {
-                        Button(intent: RefreshWidgetIntent()) {
-                            Image(systemName: "arrow.clockwise.circle")
-                                .font(.title2)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("手動刷新")
-                    }
                 }
-                Text(entry.isRunning ? timeStr(entry.remaining) : "未在倒數")
-                    .font(.title2).monospacedDigit()
                 
-                ProgressView(value: progress, total: 1)
+                Text(entry.isRunning ? timeStr(entry.remaining) : (entry.phase == .focus ? "準備專注" : "準備休息"))
+                    .font(.largeTitle).fontWeight(.bold)
+                    .foregroundStyle(entry.isRunning ?
+                        .primary : .secondary)
+                    .monospacedDigit()
+                
+                ProgressView(value: entry.isRunning ? progress : 0, total: 1)
                     .progressViewStyle(.linear)
+                    .tint(.green)
+                    .scaleEffect(y: 1.2)
                 
                 Spacer()
             }
             
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
             
-            metricCard(title: "今日累積", value: "\(entry.focusMinutesToday)", unit: "分", icon: "clock")
-            metricCard(title: "完成次數", value: "\(entry.sessionsToday)", unit: "次", icon: "checkmark.circle")
+            VStack(spacing: 8){
+                metricCard(title: "今日", value: "\(entry.focusMinutesToday)", unit: "分", icon: "clock.fill")
+                metricCard(title: "完成", value: "\(entry.sessionsToday)", unit: "次", icon: "checkmark.circle.fill")
+            }
         }
-        .padding(14)
+        .padding(12)
         .containerBackground(.fill.tertiary, for: .widget)
     }
     
     private func metricCard(title: String, value: String, unit: String, icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
                 Image(systemName: icon)
-                Text(title).font(.caption).foregroundStyle(.secondary)
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
             }
-            Text(value).font(.title3).bold().monospacedDigit()
-            Text(unit).font(.caption2).foregroundStyle(.secondary)
+            
+            HStack(alignment: .lastTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.title3).fontWeight(.bold)
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+                Text(unit)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
+        .frame(width: 60)
         .padding(10)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(            RoundedRectangle(cornerRadius: 10)
+            .stroke(.green.opacity(0.2), lineWidth: 1)
+        )
     }
     
     private var statusText: String {
@@ -172,9 +211,21 @@ struct PomodoroView: View {
         entry.phase == .focus ? .green : .orange
     }
     private var progress: Double {
-        let total: Double = (entry.phase == .focus) ? 25*60 : 5*60
+        let total: Double = {
+            if entry.phase == .focus {
+                return 25*60
+            } else {
+                return 5*60
+            }
+        }()
         let r = min(max(entry.remaining, 0), total)
-        return total == 0 ? 0 : 1 - (r / total)
+        let progressValue = total == 0 ? 0 : 1 - (r / total)
+        
+            // ✅ 除錯進度計算
+        print("📊 進度計算: 剩餘\(Int(r/60)):\(Int(r.truncatingRemainder(dividingBy: 60))), 總計\(Int(total/60))分, 進度\(Int(progressValue*100))%")
+        
+        return progressValue
+        
     }
 }
 
